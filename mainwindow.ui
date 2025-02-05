@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>863</width>
-    <height>309</height>
+    <width>897</width>
+    <height>457</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>SimQC</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QTabWidget" name="tabWidget">
@@ -23,7 +23,7 @@
       <x>0</x>
       <y>0</y>
       <width>881</width>
-      <height>311</height>
+      <height>411</height>
      </rect>
     </property>
     <property name="locale">
@@ -144,6 +144,16 @@
        <string>Параметры</string>
       </property>
      </widget>
+     <widget class="QCustomPlot" name="widget" native="true">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>100</y>
+        <width>521</width>
+        <height>211</height>
+       </rect>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_2">
      <attribute name="title">
@@ -157,13 +167,21 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>863</width>
+     <width>897</width>
      <height>22</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header>qcustomplot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
