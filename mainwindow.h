@@ -2,7 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <subsystemparam.h>
+#include "subsystemparam.h"
+#include "components.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -17,10 +18,13 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_pushButton_param_clicked();
+
+    void on_pushButton_Start_clicked();
 
 private:
     Ui::MainWindow *ui;
-    SubsystemParam subsystemParam;
+    Laser laser;
+    void plotGraph(const Laser &laser);
+//    SubsystemParam subsystemParam;
 };
 #endif // MAINWINDOW_H

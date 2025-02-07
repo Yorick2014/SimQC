@@ -1,13 +1,14 @@
 #ifndef COMPONENTS_H
 #define COMPONENTS_H
 
+#include <cmath>
+
 struct Laser{
     double centralWavelength;
     double phase;
     double pulseDuration;
-    double timeSlot;
     double energy;
-    int countPhotons;
+    double averageCountPhotons; //среднее число фотонов
 };
 
 struct QuantumChannel{
@@ -22,4 +23,6 @@ public:
     Components();
     ~Components();
 };
+
+
 #endif // COMPONENTS_H
