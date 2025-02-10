@@ -25,6 +25,5 @@ private:
     Ui::MainWindow *ui;
     Laser laser;
     void plotGraph(const Laser &laser);
-//    SubsystemParam subsystemParam;
 };
 #endif // MAINWINDOW_H
