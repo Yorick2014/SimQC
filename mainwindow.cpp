@@ -9,6 +9,10 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    ui->pulse_plot->setInteraction(QCP::iRangeZoom, true);
+    ui->pulse_plot->setInteraction(QCP::iRangeDrag, true);
+
 }
 
 MainWindow::~MainWindow()
@@ -29,34 +33,35 @@ void MainWindow::on_pushButton_Start_clicked()
     plotGraph(laser);
 }
 
-void MainWindow::plotGraph(const Laser &laser)
-{
+void MainWindow::plotGraph(const Laser &laser) {
     Components components;
-    std::vector<double> frequency, spectrum;
+    SpectrumData spectrumData = components.get_spectrum(laser);
 
-    // Вызываем функцию расчёта спектра
-    components.spectrum(laser, frequency, spectrum);
-
-    // Преобразуем std::vector в QVector для графика
-    QVector<double> qFrequency = QVector<double>(frequency.begin(), frequency.end());
-    QVector<double> qSpectrum = QVector<double>(spectrum.begin(), spectrum.end());
-
-    // Удаляем предыдущие графики
+    // Очищаем предыдущие графики
     ui->pulse_plot->clearGraphs();
     ui->pulse_plot->addGraph();
 
-    // Добавляем новый график
-    ui->pulse_plot->graph(0)->setData(qFrequency, qSpectrum);
+    // Устанавливаем данные для графика
+    ui->pulse_plot->graph(0)->setData(spectrumData.frequency, spectrumData.intensity);
 
     ui->pulse_plot->xAxis->setLabel("Частота (Гц)");
     ui->pulse_plot->yAxis->setLabel("Амплитуда");
 
     // Установка диапазонов осей
-    if (!qFrequency.isEmpty() && !qSpectrum.isEmpty()) {
-        ui->pulse_plot->xAxis->setRange(0, qFrequency.last());
-        ui->pulse_plot->yAxis->setRange(0, *std::max_element(qSpectrum.begin(), qSpectrum.end()));
+    if (!spectrumData.frequency.isEmpty() && !spectrumData.intensity.isEmpty()) {
+        double freqMin = spectrumData.frequency.first();
+        double freqMax = spectrumData.frequency.last();
+        double dataRange = freqMax - freqMin;
+        // Если диапазон данных слишком узкий, задаём минимальный видимый диапазон оси X:
+        double desiredRange = (dataRange > 0) ? std::max(dataRange, dataRange / 0.4) : 1.0;
+        double center = (freqMin + freqMax) / 2.0;
+
+        ui->pulse_plot->xAxis->setRange(center - desiredRange / 2, center + desiredRange / 2);
+        ui->pulse_plot->yAxis->setRange(0, *std::max_element(spectrumData.intensity.begin(), spectrumData.intensity.end()));
     }
+
 
     ui->pulse_plot->replot();
 }
+
 

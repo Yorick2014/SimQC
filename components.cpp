@@ -2,6 +2,9 @@
 #include "subsystemparam.h"
 #include <algorithm>
 
+const double SPEED_LIGHT = 3e8; // Скорость света, м/с
+const double GAUS_K = 0.441;
+
 Components::Components()
 {
 
@@ -12,49 +15,42 @@ Components::~Components()
 
 }
 
-void Components::spectrum(const Laser &laser, std::vector<double> &frequency, std::vector<double> &spectrum) {
+SpectrumData Components::get_spectrum(const Laser &laser) {
+    SpectrumData data;
 
-    double omega = (SPEED_LIGHT * 2 * M_PI / laser.centralWavelength); // Угловая частота
-    double F = SPEED_LIGHT / laser.centralWavelength;
-    double T = (1/(laser.frequencyResolution * F));
-    double dt = T / laser.numberPoints;
+    // Центральная частота (Гц)
+    const double nu0 = SPEED_LIGHT / laser.centralWavelength;
+    // std::cout << "Центральная частота: " << nu0 / 1e12 << " ТГц\n";
 
-    // Создаём сигнал
-    std::vector<double> signal(laser.numberPoints);
-    for (int i = 0; i < laser.numberPoints; ++i) {
-        double t = i * T - (laser.numberPoints / 2) * T;
-        signal[i] = 10.0 * cos(2 * M_PI * omega * t) * exp(-pow(t, 2) / (2 * pow(laser.pulseDuration, 2)));
+    // Стандартное отклонение во времени
+    const double sigma_t = laser.pulseDuration / (2 * sqrt(2 * log(2)));
+    // Стандартное отклонение в частотной области
+    const double sigma_nu = 1 / (2 * M_PI * sigma_t);
+
+    // Ширина спектра (FWHM) в Гц
+    const double delta_nu = GAUS_K * (1 / laser.pulseDuration);
+
+    // Ширина спектра (FWHM) в нм
+//    const double delta_lamda = (pow(laser.centralWavelength, 2) / SPEED_LIGHT) * delta_nu;
+
+    // Определяем диапазон частот
+    double nu_min = nu0 - 5 * delta_nu;
+    double nu_max = nu0 + 5 * delta_nu;
+    int N = 30;  // Количество точек
+    double step = (nu_max - nu_min) / N;
+
+    // Рассчитываем спектр и заполняем структуру
+    for (int i = 0; i < N; i++) {
+        double nu = nu_min + i * step;
+        double intensity = gaussian_spectrum(nu, nu0, sigma_nu);
+        data.frequency.append(nu);
+        data.intensity.append(intensity);
     }
 
-    // FFTW: входной и выходной массивы
-    fftw_complex *in, *out;
-    fftw_plan planFFT;
+    return data;
+}
 
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * laser.numberPoints);
-    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * laser.numberPoints);
-
-    for (int i = 0; i < laser.numberPoints; ++i) {
-        in[i][0] = signal[i]; // Действительная часть
-        in[i][1] = 0.0;       // Мнимая часть (нулевая)
-    }
-
-    // Выполняем FFT
-    planFFT = fftw_plan_dft_1d(laser.numberPoints, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-    fftw_execute(planFFT);
-
-    // Заполняем выходные массивы частоты и спектра
-    frequency.clear();
-    spectrum.clear();
-    for (int i = 0; i < laser.numberPoints / 2; ++i) { // Только положительные частоты
-        double freq = i / (laser.numberPoints * dt);
-        double magnitude = sqrt(out[i][0] * out[i][0] + out[i][1] * out[i][1]);
-
-        frequency.push_back(freq);
-        spectrum.push_back(magnitude);
-    }
-
-    // Освобождаем память
-    fftw_destroy_plan(planFFT);
-    fftw_free(in);
-    fftw_free(out);
+double Components::gaussian_spectrum(double nu, double nu0, double sigma_nu)
+{
+    return exp(-pow((nu - nu0), 2) / (2 * pow(sigma_nu, 2)));
 }

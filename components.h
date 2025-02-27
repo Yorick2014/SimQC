@@ -4,6 +4,7 @@
 #include <vector>
 #include <cmath>
 #include <fftw3.h>
+#include <QVector>
 
 struct Laser{
     double centralWavelength;
@@ -15,6 +16,11 @@ struct Laser{
     double frequencyResolution; //множитель для частоты дискретизации
 };
 
+struct SpectrumData {
+    QVector<double> frequency;
+    QVector<double> intensity;
+};
+
 struct QuantumChannel{
     double channelLength;
     double chromaticDispersion;
@@ -23,13 +29,13 @@ struct QuantumChannel{
 
 class Components
 {
+private:
+    double gaussian_spectrum(double nu, double nu0, double sigma_nu);
 public:
     Components();
     ~Components();
 
-    const double SPEED_LIGHT = 3e8;
-
-    void spectrum(const Laser &laser, std::vector<double> &frequency, std::vector<double> &spectrum);
+    SpectrumData get_spectrum(const Laser &laser);
 };
 
 #endif // COMPONENTS_H
