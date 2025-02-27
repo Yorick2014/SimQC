@@ -236,19 +236,6 @@ p, li { white-space: pre-wrap; }
        <string>1024</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_res">
-      <property name="geometry">
-       <rect>
-        <x>380</x>
-        <y>10</y>
-        <width>113</width>
-        <height>25</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>4</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_13">
       <property name="geometry">
        <rect>
@@ -260,19 +247,6 @@ p, li { white-space: pre-wrap; }
       </property>
       <property name="text">
        <string>Число N</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_14">
-      <property name="geometry">
-       <rect>
-        <x>270</x>
-        <y>10</y>
-        <width>91</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Множитель</string>
       </property>
      </widget>
      <widget class="Line" name="line_4">
@@ -293,29 +267,6 @@ p, li { white-space: pre-wrap; }
      <attribute name="title">
       <string>Моделирование</string>
      </attribute>
-     <widget class="QLineEdit" name="lineEdit_7">
-      <property name="geometry">
-       <rect>
-        <x>710</x>
-        <y>10</y>
-        <width>113</width>
-        <height>25</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_7">
-      <property name="geometry">
-       <rect>
-        <x>600</x>
-        <y>10</y>
-        <width>91</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Множитель</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="pushButton_Stop">
       <property name="geometry">
        <rect>
@@ -386,6 +337,9 @@ p, li { white-space: pre-wrap; }
       </property>
       <property name="text">
        <string>Спектр</string>
+      </property>
+      <property name="autoRepeat">
+       <bool>true</bool>
       </property>
      </widget>
      <widget class="QRadioButton" name="radioButton_time">

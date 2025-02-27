@@ -4,6 +4,7 @@
 
 const double SPEED_LIGHT = 3e8; // Скорость света, м/с
 const double GAUS_K = 0.441;
+static const double PLANCK_CONSTANT = 6.62607015e-34; // Дж·с
 
 Components::Components()
 {
@@ -55,55 +56,94 @@ double Components::gaussian_spectrum(double nu, double nu0, double sigma_nu)
     return exp(-pow((nu - nu0), 2) / (2 * pow(sigma_nu, 2)));
 }
 
-TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const Laser &laser) {
+TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const Laser &laser)
+{
     TimeDomainData timeData;
 
     // Количество точек по времени для численного интегрирования
     const int N_time = laser.numberPoints;
 
-    // Вычисляем центральную частоту (nu0) как середину диапазона спектра
-    double nu0 = (spectrum.frequency.first() + spectrum.frequency.last()) / 2.0;
+    // Определяем центральную частоту (nu0) как середину диапазона
+    double nu_Min = spectrum.frequency.first();
+    double nu_Max = spectrum.frequency.last();
+    double nu0   = 0.5 * (nu_Min + nu_Max);
 
-    // Оценим "ширину" спектра. Зная, что в get_spectrum диапазон частот:
-    // nu_min = nu0 - 5*delta_nu, nu_max = nu0 + 5*delta_nu,
-    // полная ширина: 10*delta_nu.
-    // По определению Фурье для Гауссового сигнала обратное преобразование даёт огибающую:
-    // E_envelope(t) ~ ∫ exp(-x^2/(2σ_ν^2)) cos(2π x t) dx = √(2πσ_ν^2) exp(-2π²σ_ν²t²)
-    // где x = ν - ν0.
-    // Если FWHM спектра delta_nu = GAUS_K/T, то можно оценить σ_ν через:
-    // FWHM = 2√(2 ln2) σ_ν   ⇒   σ_ν = (nu_max - nu_min) / (2√(2 ln2)*5)
-    double fullWidth = spectrum.frequency.last() - spectrum.frequency.first(); // = 10*delta_nu
-    double sigma_nu = fullWidth / (10.0 * 2.0 * sqrt(2 * log(2))); // оценка σ_ν
+    // Оценка ширины спектра (fullWidth = 10 * delta_nu при вашем get_spectrum)
+    double full_Width = nu_Max - nu_Min;
+    // Оцениваем сигма_ν (sigma_nu) для гауссового спектра
+    // FWHM = 2 * sqrt(2 ln2) * sigma_nu => sigma_nu = fullWidth / (10 * 2 sqrt(2 ln2))
+    double sigma_nu = full_Width / (10.0 * 2.0 * std::sqrt(2.0 * std::log(2.0)));
 
-    // Оценим характерную длительность огибающей.
-    // Для Гауссового поля обратное преобразование даёт E_envelope(t) ~ exp(-2π²σ_ν²t²).
-    // Тогда FWHM во времени: t_FWHM = sqrt(ln2)/(πσ_ν)
-    double t_FWHM = sqrt(log(2)) / (M_PI * sigma_nu);
+    // Оценка FWHM во времени (для гауссового импульса при нулевой фазе)
+    // t_FWHM ~ sqrt(ln2) / (π * sigma_nu)
+    double t_FWHM = std::sqrt(std::log(2.0)) / (M_PI * sigma_nu);
 
-    // Зададим диапазон времени, например, от -5*t_FWHM до 5*t_FWHM
-    double t_min = -5 * t_FWHM;
-    double t_max =  5 * t_FWHM;
-    double dt = (t_max - t_min) / (N_time - 1);
+    // Задаём диапазон времени
+    double t_min = -5.0 * t_FWHM;
+    double t_max =  5.0 * t_FWHM;
+    double dt    = (t_max - t_min) / (N_time - 1);
 
-    // Определяем шаг по частоте для численного интегрирования
-    double dnu = (spectrum.frequency.last() - spectrum.frequency.first()) / (spectrum.frequency.size() - 1);
+    // Шаг по частоте для численного интегрирования
+    int N_freq = spectrum.frequency.size();
+    double dnu = (nu_Max - nu_Min) / (N_freq - 1);
 
-    // Для каждого t вычисляем интеграл:
-    // E(t) = ∫ S(ν) exp(2π i ν t)dν = exp(2π i ν0 t) ∫ S(ν) exp(2π i (ν-ν0)t)dν
-    // Принимая, что спектральная фаза нулевая, считаем только реальную часть (огибающую):
-    // E_envelope(t) = ∫ S(ν) cos[2π (ν - ν0)t] dν
-    for (int i = 0; i < N_time; ++i) {
-        double t = t_min + i * dt;
-        double sum = 0.0;
-        for (int j = 0; j < spectrum.frequency.size(); ++j) {
-            double nu = spectrum.frequency[j];
-            double value = spectrum.intensity[j];
-            double x = nu - nu0; // сдвиг для удаления несущей
-            sum += value * cos(2 * M_PI * x * t) * dnu;
-        }
-        timeData.time.append(t);
-        timeData.intensity.append(sum);
-    }
+    std::vector<double> E_time(N_time, 0.0); // временная амплитуда (до возведения в квадрат)
+
+     for (int i = 0; i < N_time; ++i) {
+         double t = t_min + i * dt;
+         double sum = 0.0;
+         for (int j = 0; j < N_freq; ++j) {
+             double nu    = spectrum.frequency[j];
+             double I_nu  = spectrum.intensity[j];  // интенсивность в частотной области
+             double ampNu = std::sqrt(I_nu);        // амплитуда в частотной области
+             double x     = nu - nu0;               // сдвиг к центральной частоте
+
+             sum += ampNu * std::cos(2.0 * M_PI * x * t) * dnu;
+         }
+         E_time[i] = sum; // амплитуда E(t)
+     }
+
+     // 3) Превращаем амплитуду в интенсивность:
+     //    I(t) = E(t)^2
+     //    (пока без нормировки на число фотонов)
+     timeData.time.reserve(N_time);
+     timeData.intensity.reserve(N_time);
+     for (int i = 0; i < N_time; ++i) {
+         double t = t_min + i * dt;
+         double I_t = E_time[i]*E_time[i]; // интенсивность во времени
+         timeData.time.push_back(t);
+         timeData.intensity.push_back(I_t);
+     }
+
+     // --- 4) Нормировка на N фотонов ---
+     // Число фотонов = laser.averageCountPhotons
+     // Энергия импульса должна быть E_pulse = N * h * nu0
+     // Посчитаем интеграл I(t) dt (численная интеграция методом трапеций или прямоугольников).
+     // Это даст суммарную энергию (в Дж), если I(t) в Вт.
+
+     double sum_energy = 0.0;
+     for (int i = 0; i < N_time - 1; ++i) {
+         double I1 = timeData.intensity[i];
+         double I2 = timeData.intensity[i+1];
+         // метод трапеций
+         double I_mid = 0.5 * (I1 + I2);
+         sum_energy += I_mid * dt;
+     }
+
+     // Энергия, которую хотим получить
+     double desired_energy = laser.averageCountPhotons * PLANCK_CONSTANT * nu0; // (Дж)
+
+     // Чтобы итоговая энергия стала равна desiredEnergy, масштабируем интенсивность
+     // scaleFactor = desiredEnergy / sumEnergy
+     // Тогда I_scaled(t) = scaleFactor * I(t)
+     // и интеграл по времени даст desiredEnergy.
+     if (sum_energy > 0.0) {
+         double scale_factor = desired_energy / sum_energy;
+         for (int i = 0; i < N_time; ++i) {
+             timeData.intensity[i] *= scale_factor;
+         }
+     }
 
     return timeData;
 }
+

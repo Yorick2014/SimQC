@@ -13,7 +13,6 @@ struct Laser{
     double energy;
     double averageCountPhotons; //среднее число фотонов
     double numberPoints; //число точек для спектра
-    double frequencyResolution; //множитель для частоты дискретизации
 };
 
 struct SpectrumData {
