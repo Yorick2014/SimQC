@@ -130,15 +130,14 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
          sum_energy += I_mid * dt;
      }
 
-     // Энергия, которую хотим получить
-     double desired_energy = laser.averageCountPhotons * PLANCK_CONSTANT * nu0; // (Дж)
+     double pulse_energy = laser.averageCountPhotons * PLANCK_CONSTANT * nu0; // (Дж)
 
-     // Чтобы итоговая энергия стала равна desiredEnergy, масштабируем интенсивность
+     // Чтобы итоговая энергия стала равна pulse_energy, масштабируем интенсивность
      // scaleFactor = desiredEnergy / sumEnergy
      // Тогда I_scaled(t) = scaleFactor * I(t)
      // и интеграл по времени даст desiredEnergy.
      if (sum_energy > 0.0) {
-         double scale_factor = desired_energy / sum_energy;
+         double scale_factor = pulse_energy / sum_energy;
          for (int i = 0; i < N_time; ++i) {
              timeData.intensity[i] *= scale_factor;
          }
