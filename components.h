@@ -21,6 +21,11 @@ struct SpectrumData {
     QVector<double> intensity;
 };
 
+struct TimeDomainData {
+    QVector<double> time;
+    QVector<double> intensity; // огибающая временного сигнала
+};
+
 struct QuantumChannel{
     double channelLength;
     double chromaticDispersion;
@@ -36,6 +41,7 @@ public:
     ~Components();
 
     SpectrumData get_spectrum(const Laser &laser);
+    TimeDomainData get_time_domain(const SpectrumData &spectrum, const Laser &laser);
 };
 
 #endif // COMPONENTS_H

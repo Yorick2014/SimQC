@@ -39,7 +39,7 @@
      <locale language="Russian" country="Russia"/>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <property name="usesScrollButtons">
      <bool>true</bool>
@@ -316,16 +316,6 @@ p, li { white-space: pre-wrap; }
        <string>Множитель</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_6">
-      <property name="geometry">
-       <rect>
-        <x>230</x>
-        <y>10</y>
-        <width>113</width>
-        <height>25</height>
-       </rect>
-      </property>
-     </widget>
      <widget class="QPushButton" name="pushButton_Stop">
       <property name="geometry">
        <rect>
@@ -337,19 +327,6 @@ p, li { white-space: pre-wrap; }
       </property>
       <property name="text">
        <string>Стоп</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_6">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>10</y>
-        <width>71</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Число N</string>
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_Start">
@@ -394,8 +371,34 @@ p, li { white-space: pre-wrap; }
         <x>20</x>
         <y>110</y>
         <width>921</width>
-        <height>241</height>
+        <height>311</height>
        </rect>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="radioButton_spec">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>20</y>
+        <width>112</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Спектр</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="radioButton_time">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>50</y>
+        <width>161</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Временная область</string>
       </property>
      </widget>
     </widget>

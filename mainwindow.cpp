@@ -30,7 +30,15 @@ void MainWindow::on_pushButton_Start_clicked()
     laser.numberPoints = ui->lineEdit_N->text().toDouble();
     laser.frequencyResolution = ui->lineEdit_res->text().toDouble();
 
-    plotGraph(laser);
+    // Проверяем, какой QRadioButton выбран
+    if (ui->radioButton_spec->isChecked()) {
+        // Построение спектра
+        plotGraph(laser);
+    }
+    else if (ui->radioButton_time->isChecked()) {
+        // Построение временной области на основе спектра
+        plotTimeDomain(laser);
+    }
 }
 
 void MainWindow::plotGraph(const Laser &laser) {
@@ -60,6 +68,26 @@ void MainWindow::plotGraph(const Laser &laser) {
         ui->pulse_plot->yAxis->setRange(0, *std::max_element(spectrumData.intensity.begin(), spectrumData.intensity.end()));
     }
 
+
+    ui->pulse_plot->replot();
+}
+
+void MainWindow::plotTimeDomain(const Laser &laser) {
+    Components components;
+    SpectrumData spectrumData = components.get_spectrum(laser);
+    TimeDomainData timeData = components.get_time_domain(spectrumData, laser);
+
+    ui->pulse_plot->clearGraphs();
+    ui->pulse_plot->addGraph();
+    ui->pulse_plot->graph(0)->setData(timeData.time, timeData.intensity);
+
+    ui->pulse_plot->xAxis->setLabel("Время (с)");
+    ui->pulse_plot->yAxis->setLabel("Интенсивность");
+
+    if (!timeData.time.isEmpty() && !timeData.intensity.isEmpty()) {
+        ui->pulse_plot->xAxis->setRange(timeData.time.first(), timeData.time.last());
+        ui->pulse_plot->yAxis->setRange(0, *std::max_element(timeData.intensity.begin(), timeData.intensity.end()));
+    }
 
     ui->pulse_plot->replot();
 }

@@ -25,5 +25,6 @@ private:
     Ui::MainWindow *ui;
     Laser laser;
     void plotGraph(const Laser &laser);
+    void plotTimeDomain(const Laser &laser);
 };
 #endif // MAINWINDOW_H
