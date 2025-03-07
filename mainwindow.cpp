@@ -63,19 +63,20 @@ void MainWindow::plotGraph(const Laser &laser) {
         ui->pulse_plot->xAxis->setRange(center - desired_range / 2, center + desired_range / 2);
         ui->pulse_plot->yAxis->setRange(0, *std::max_element(spectrumData.intensity.begin(), spectrumData.intensity.end()));
     }
-
     ui->pulse_plot->replot();
+}
+
+double interpolate(const TimeDomainData &data, double t, double dt) {
+    int idx = static_cast<int>((t - data.time[0]) / dt);
+    if (idx < 0 || idx >= data.time.size()-1) return 0.0;
+    double frac = (t - data.time[idx]) / dt;
+    return data.intensity[idx] * (1 - frac) + data.intensity[idx+1] * frac;
 }
 
 // Функция для генерации композиции импульсов с заданным периодом между ними
 TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses, double dt)
 {
-    int N_single = singlePulse.time.size();
-    if (N_single == 0 || numPulses < 1)
-        return singlePulse;
-
-    // Длительность одного импульса (можно использовать для справки)
-    double T_pulse = singlePulse.time.last() - singlePulse.time.first();
+    int N_single = laser.numberPoints;
 
     // Перевод частоты генерации из МГц в Гц и вычисление периода
     double repRateHz = laser.repRate * 1e6;
@@ -84,16 +85,11 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const L
     int shiftSamples = static_cast<int>(std::round(T_sep / dt));
 
     // Общая длина результирующего сигнала
-    int N_composite = N_single + (numPulses - 1) * shiftSamples;
+    int N_composite = numPulses * N_single;
 
     TimeDomainData composite;
     composite.time.resize(N_composite);
     composite.intensity.resize(N_composite, 0.0);
-
-    double t0 = singlePulse.time.first();
-    for (int i = 0; i < N_composite; ++i) {
-        composite.time[i] = t0 + i * dt;
-    }
 
     // Накладываем копии одиночного импульса, сдвигая их на shiftSamples отсчетов
     for (int p = 0; p < numPulses; ++p) {
@@ -103,6 +99,15 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const L
                 composite.intensity[offset + j] += singlePulse.intensity[j];
         }
     }
+
+    // массив временных точек
+//    double t0 = singlePulse.time.first();
+    for (int i = 0; i < N_composite; ++i) {
+        composite.time[i] = i * dt;
+    }
+//    qDebug() << "First intensity " << composite.intensity[0];
+//    qDebug() << "First time " << composite.time[0];
+
     return composite;
 }
 
@@ -128,6 +133,25 @@ void MainWindow::plotTimeDomain(const Laser &laser)
         timeData = singlePulse;
     }
 
+    // Найдем первый индекс, где интенсивность становится больше 0
+    int idx = -1;
+    for (int i = 0; i < timeData.intensity.size(); ++i) {
+        if (timeData.intensity[i] > 1e-14) {
+            idx = i;
+            break;
+        }
+    }
+
+    if (idx != -1) {
+        // Получаем время, соответствующее первому ненулевому значению интенсивности
+        double shiftTime = timeData.time[idx];
+
+        // Смещаем все значения времени так, чтобы время в этом индексе стало 0
+        for (int i = 0; i < timeData.time.size(); ++i) {
+            timeData.time[i] -= shiftTime;
+        }
+    }
+
     // 3) Строим график во временной области
     ui->pulse_plot->clearGraphs();
     ui->pulse_plot->addGraph();
@@ -137,6 +161,8 @@ void MainWindow::plotTimeDomain(const Laser &laser)
 
     if (!timeData.time.isEmpty() && !timeData.intensity.isEmpty()) {
         double tMin = timeData.time.first();
+        qDebug() << "tMin " << tMin;
+        qDebug() << "iMin " << timeData.intensity.first();
         double tMax = timeData.time.last();
         double iMax = *std::max_element(timeData.intensity.begin(), timeData.intensity.end());
         ui->pulse_plot->xAxis->setRange(tMin, tMax);
