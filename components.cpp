@@ -68,7 +68,7 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
     double nu_Max = spectrum.frequency.last();
     double nu0   = 0.5 * (nu_Min + nu_Max);
 
-    // Оценка ширины спектра (fullWidth = 10 * delta_nu при вашем get_spectrum)
+    // Оценка ширины спектра
     double full_Width = nu_Max - nu_Min;
     // Оцениваем сигма_ν (sigma_nu) для гауссового спектра
     // FWHM = 2 * sqrt(2 ln2) * sigma_nu => sigma_nu = fullWidth / (10 * 2 sqrt(2 ln2))
@@ -145,4 +145,3 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
 
     return timeData;
 }
-

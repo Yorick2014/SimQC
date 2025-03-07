@@ -4,6 +4,7 @@
 #include <fftw3.h>
 #include <QVector>
 #include <QDebug>
+#include <cmath>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,22 +21,23 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
 void MainWindow::on_pushButton_Start_clicked()
 {
+    // Считываем параметры лазера
     laser.centralWavelength = ui->lineEdit_centralWavelength->text().toDouble();
     laser.phase = ui->lineEdit_phase->text().toDouble();
     laser.pulseDuration = ui->lineEdit_pulseDuration->text().toDouble();
     laser.averageCountPhotons = ui->lineEdit_averageCountPh->text().toDouble();
     laser.numberPoints = ui->lineEdit_N->text().toDouble();
+    laser.repRate = ui->lineEdit_repRate->text().toDouble(); // частота в МГц
 
-    // Проверяем, какой QRadioButton выбран
+    // Выбор режима построения графика
     if (ui->radioButton_spec->isChecked()) {
         // Построение спектра
         plotGraph(laser);
     }
     else if (ui->radioButton_time->isChecked()) {
-        // Построение временной области на основе спектра
+        // Построение временной области с генерацией серии импульсов
         plotTimeDomain(laser);
     }
 }
@@ -44,22 +46,17 @@ void MainWindow::plotGraph(const Laser &laser) {
     Components components;
     SpectrumData spectrumData = components.get_spectrum(laser);
 
-    // Очищаем предыдущие графики
     ui->pulse_plot->clearGraphs();
     ui->pulse_plot->addGraph();
-
-    // Устанавливаем данные для графика
     ui->pulse_plot->graph(0)->setData(spectrumData.frequency, spectrumData.intensity);
 
     ui->pulse_plot->xAxis->setLabel("Частота (Гц)");
     ui->pulse_plot->yAxis->setLabel("Амплитуда");
 
-    // Установка диапазонов осей
     if (!spectrumData.frequency.isEmpty() && !spectrumData.intensity.isEmpty()) {
         double freq_min = spectrumData.frequency.first();
         double freq_max = spectrumData.frequency.last();
         double data_range = freq_max - freq_min;
-        // Если диапазон данных слишком узкий, задаём минимальный видимый диапазон оси X:
         double desired_range = (data_range > 0) ? std::max(data_range, data_range / 0.4) : 1.0;
         double center = (freq_min + freq_max) / 2.0;
 
@@ -70,18 +67,20 @@ void MainWindow::plotGraph(const Laser &laser) {
     ui->pulse_plot->replot();
 }
 
-TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, int numPulses, double dt)
+// Функция для генерации композиции импульсов с заданным периодом между ними
+TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses, double dt)
 {
-    // Количество точек в одном импульсе
     int N_single = singlePulse.time.size();
     if (N_single == 0 || numPulses < 1)
-        return singlePulse; // защита от некорректных данных
+        return singlePulse;
 
-    // Рассчитаем длительность одного импульса
+    // Длительность одного импульса (можно использовать для справки)
     double T_pulse = singlePulse.time.last() - singlePulse.time.first();
-    // Зададим временной интервал между началом соседних импульсов.
-    // Здесь выбран коэффициент 1.5 (можно изменить по необходимости).
-    double T_sep = T_pulse * 1.5;
+
+    // Перевод частоты генерации из МГц в Гц и вычисление периода
+    double repRateHz = laser.repRate * 1e6;
+    double T_sep = (repRateHz > 0.0) ? (1.0 / repRateHz) : 0.0;
+
     int shiftSamples = static_cast<int>(std::round(T_sep / dt));
 
     // Общая длина результирующего сигнала
@@ -91,13 +90,12 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, int num
     composite.time.resize(N_composite);
     composite.intensity.resize(N_composite, 0.0);
 
-    // Заполним временную ось результирующего сигнала
     double t0 = singlePulse.time.first();
     for (int i = 0; i < N_composite; ++i) {
         composite.time[i] = t0 + i * dt;
     }
 
-    // Суммируем копии одиночного импульса, сдвигая их на shiftSamples
+    // Накладываем копии одиночного импульса, сдвигая их на shiftSamples отсчетов
     for (int p = 0; p < numPulses; ++p) {
         int offset = p * shiftSamples;
         for (int j = 0; j < N_single; ++j) {
@@ -111,17 +109,20 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, int num
 void MainWindow::plotTimeDomain(const Laser &laser)
 {
     Components components;
-    // 1) Считаем спектр и преобразуем его в временную область
+    // 1) Получаем спектр и преобразуем его во временную область (одиночный импульс)
     SpectrumData spectrumData = components.get_spectrum(laser);
     TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser);
 
-    // 2) Читаем число импульсов из lineEdit_num_pulse (по умолчанию должно быть 1 или больше)
+    // 2) Читаем число импульсов (из lineEdit_num_pulse)
     int numPulses = ui->lineEdit_num_pulse->text().toInt();
-    // Если число импульсов больше 1, формируем композицию
+    if (numPulses < 1) {
+        numPulses = 1;
+    }
+
     TimeDomainData timeData;
-    if(numPulses > 1 && singlePulse.time.size() >= 2) {
+    if (numPulses > 1 && singlePulse.time.size() >= 2) {
         double dt = singlePulse.time[1] - singlePulse.time[0];
-        timeData = generateCompositePulse(singlePulse, numPulses, dt);
+        timeData = generateCompositePulse(singlePulse, laser, numPulses, dt);
     }
     else {
         timeData = singlePulse;
@@ -134,7 +135,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     ui->pulse_plot->xAxis->setLabel("Время (с)");
     ui->pulse_plot->yAxis->setLabel("Интенсивность (Вт)");
 
-    if(!timeData.time.isEmpty() && !timeData.intensity.isEmpty()) {
+    if (!timeData.time.isEmpty() && !timeData.intensity.isEmpty()) {
         double tMin = timeData.time.first();
         double tMax = timeData.time.last();
         double iMax = *std::max_element(timeData.intensity.begin(), timeData.intensity.end());
@@ -143,9 +144,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     }
     ui->pulse_plot->replot();
 
-    // 4) Подсчёт энергии одного импульса.
-    // Здесь энергия считается как интеграл I(t) dt для всей композиции,
-    // делённый на число импульсов.
+    // 4) Подсчёт энергии одного импульса (интеграл I(t) dt, делённый на число импульсов)
     double totalEnergy = 0.0;
     int N_time = timeData.time.size();
     for (int i = 0; i < N_time - 1; ++i) {
