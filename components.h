@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <cmath>
-#include <fftw3.h>
 #include <QVector>
 
 struct Laser{

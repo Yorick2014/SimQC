@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "components.h"
 #include "ui_mainwindow.h"
-#include <fftw3.h>
 #include <QVector>
 #include <QDebug>
 #include <cmath>
