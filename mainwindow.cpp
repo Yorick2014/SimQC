@@ -80,11 +80,10 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const L
     // Перевод частоты генерации из МГц в Гц и вычисление периода
     double repRateHz = laser.repRate * 1e6;
     double T_sep = (repRateHz > 0.0) ? (1.0 / repRateHz) : 0.0;
-
     int shiftSamples = static_cast<int>(std::round(T_sep / dt));
 
     // Общая длина результирующего сигнала
-    int N_composite = numPulses * N_single;
+    int N_composite = (numPulses - 1) * shiftSamples + N_single;
 
     TimeDomainData composite;
     composite.time.resize(N_composite);
