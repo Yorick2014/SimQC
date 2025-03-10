@@ -134,7 +134,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     // Найдем первый индекс, где интенсивность становится больше 0
     int idx = -1;
     for (int i = 0; i < timeData.intensity.size(); ++i) {
-        if (timeData.intensity[i] > 1e-14) {
+        if (timeData.intensity[i] > 2e-14) {
             idx = i;
             break;
         }
@@ -149,10 +149,12 @@ void MainWindow::plotTimeDomain(const Laser &laser)
             timeData.time[i] -= shiftTime;
         }
     }
+    qDebug() << "dt/N" << (singlePulse.time[1] - singlePulse.time[0]);
 
     // 3) Строим график во временной области
     ui->pulse_plot->clearGraphs();
     ui->pulse_plot->addGraph();
+    ui->pulse_plot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 3));
     ui->pulse_plot->graph(0)->setData(timeData.time, timeData.intensity);
     ui->pulse_plot->xAxis->setLabel("Время (с)");
     ui->pulse_plot->yAxis->setLabel("Интенсивность (Вт)");

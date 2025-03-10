@@ -79,8 +79,8 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
     double t_FWHM = std::sqrt(std::log(2.0)) / (M_PI * sigma_nu);
 
     // Задаём диапазон времени
-    double t_min = -5.0 * t_FWHM;
-    double t_max =  5.0 * t_FWHM;
+    double t_min = -1.5 * t_FWHM;
+    double t_max =  1.5 * t_FWHM;
     double dt    = (t_max - t_min) / (N_time - 1);
 
     // Шаг по частоте для численного интегрирования
@@ -105,7 +105,6 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
 
      // 3) Превращаем амплитуду в интенсивность:
      //    I(t) = E(t)^2
-     //    (пока без нормировки на число фотонов)
      timeData.time.reserve(N_time);
      timeData.intensity.reserve(N_time);
      for (int i = 0; i < N_time; ++i) {
