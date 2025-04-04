@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "subsystemparam.h"
 #include "components.h"
 
 QT_BEGIN_NAMESPACE

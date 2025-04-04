@@ -12,18 +12,15 @@ SOURCES += \
     components.cpp \
     main.cpp \
     mainwindow.cpp \
-    qcustomplot.cpp \
-    subsystemparam.cpp
+    qcustomplot.cpp
 
 HEADERS += \
     components.h \
     mainwindow.h \
-    qcustomplot.h \
-    subsystemparam.h
+    qcustomplot.h
 
 FORMS += \
-    mainwindow.ui \
-    subsystemparam.ui
+    mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
