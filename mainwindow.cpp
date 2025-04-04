@@ -4,10 +4,10 @@
 #include <QVector>
 #include <QDebug>
 #include <cmath>
+#include <random>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
@@ -89,22 +89,28 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const L
     composite.time.resize(N_composite);
     composite.intensity.resize(N_composite, 0.0);
 
-    // Накладываем копии одиночного импульса, сдвигая их на shiftSamples отсчетов
+    // Инициализация генератора случайных чисел
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::poisson_distribution<int> dist(laser.averageCountPhotons);
+
     for (int p = 0; p < numPulses; ++p) {
+        int n_p = dist(gen); // Число фотонов в одном импульсе
+        qDebug() << "В импульсе " << p + 1 << "фотонов: " << n_p;
+        double scale_factor = (laser.averageCountPhotons != 0.0) ? (static_cast<double>(n_p) / laser.averageCountPhotons) : 0.0;
+
         int offset = p * shiftSamples;
         for (int j = 0; j < N_single; ++j) {
-            if (offset + j < N_composite)
-                composite.intensity[offset + j] += singlePulse.intensity[j];
+            if (offset + j < N_composite) {
+                composite.intensity[offset + j] += singlePulse.intensity[j] * scale_factor;
+            }
         }
     }
 
     // массив временных точек
-//    double t0 = singlePulse.time.first();
     for (int i = 0; i < N_composite; ++i) {
         composite.time[i] = i * dt;
     }
-//    qDebug() << "First intensity " << composite.intensity[0];
-//    qDebug() << "First time " << composite.time[0];
 
     return composite;
 }
@@ -149,7 +155,6 @@ void MainWindow::plotTimeDomain(const Laser &laser)
             timeData.time[i] -= shiftTime;
         }
     }
-    qDebug() << "dt/N" << (singlePulse.time[1] - singlePulse.time[0]);
 
     // 3) Строим график во временной области
     ui->pulse_plot->clearGraphs();
@@ -161,8 +166,6 @@ void MainWindow::plotTimeDomain(const Laser &laser)
 
     if (!timeData.time.isEmpty() && !timeData.intensity.isEmpty()) {
         double tMin = timeData.time.first();
-        qDebug() << "tMin " << tMin;
-        qDebug() << "iMin " << timeData.intensity.first();
         double tMax = timeData.time.last();
         double iMax = *std::max_element(timeData.intensity.begin(), timeData.intensity.end());
         ui->pulse_plot->xAxis->setRange(tMin, tMax);

@@ -46,7 +46,6 @@ SpectrumData Components::get_spectrum(const Laser &laser) {
         data.frequency.append(nu);
         data.intensity.append(intensity);
     }
-
     return data;
 }
 
@@ -140,6 +139,5 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
              timeData.intensity[i] *= scale_factor;
          }
      }
-
     return timeData;
 }
