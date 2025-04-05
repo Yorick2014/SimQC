@@ -40,6 +40,9 @@ void MainWindow::on_pushButton_Start_clicked()
     laser.numberPoints = ui->lineEdit_N->text().toDouble();
     laser.repRate = ui->lineEdit_repRate->text().toDouble(); // частота в МГц
 
+    quantumChannel.channelAttenuation = ui->lineEdit_att->text().toDouble();
+    quantumChannel.channelLength = ui->lineEdit_length->text().toDouble();
+
     // Выбор режима построения графика
     if (ui->radioButton_spec->isChecked()) {
         // Построение спектра
@@ -100,10 +103,7 @@ double get_att (double att, double lengthChannel) {
 
 bool is_photon_loss (const QuantumChannel &quantumChannel){
     double num1 = generate_random_0_to_1();
-    qDebug() << num1;
-
     double num2 = get_att(quantumChannel.channelAttenuation, quantumChannel.channelLength);
-    qDebug() << num2;
     if (num1 > num2){
         return false;
     }
@@ -135,12 +135,17 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const L
 
     for (int p = 0; p < numPulses; ++p) {
         int n_p = dist(gen); // Число фотонов в одном импульсе
+        int count_p = n_p;
+        qDebug() << "В импульсе " << p + 1 << "было фотонов: " << n_p;
         if (n_p > 0 && quantumChannel.isAtt == true){
-            bool b = is_photon_loss(quantumChannel);
-            qDebug() << b;
+            for (int i = 0; i < n_p; i++)
+            {
+                if (is_photon_loss(quantumChannel) == true) count_p--;
+            }
         }
-        qDebug() << "В импульсе " << p + 1 << "фотонов: " << n_p;
-        double scale_factor = (laser.averageCountPhotons != 0.0) ? (static_cast<double>(n_p) / laser.averageCountPhotons) : 0.0;
+
+        qDebug() << "В импульсе " << p + 1 << "осталось фотонов: " << count_p;
+        double scale_factor = (laser.averageCountPhotons != 0.0) ? (static_cast<double>(count_p) / laser.averageCountPhotons) : 0.0;
 
         int offset = p * shiftSamples;
         for (int j = 0; j < N_single; ++j) {
