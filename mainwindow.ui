@@ -57,7 +57,7 @@
        <locale language="Russian" country="Russia"/>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="usesScrollButtons">
        <bool>true</bool>
@@ -464,14 +464,14 @@ p, li { white-space: pre-wrap; }
            </property>
            <layout class="QGridLayout" name="gridLayout_8">
             <item row="1" column="0">
-             <widget class="QCheckBox" name="checkBox_2">
+             <widget class="QCheckBox" name="checkBox_disp">
               <property name="text">
                <string>Хроматическая дисперсия</string>
               </property>
              </widget>
             </item>
             <item row="0" column="0">
-             <widget class="QCheckBox" name="checkBox">
+             <widget class="QCheckBox" name="checkBox_att">
               <property name="text">
                <string>Затухание</string>
               </property>

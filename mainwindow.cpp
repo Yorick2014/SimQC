@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <cmath>
 #include <random>
+#include <iomanip>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -22,6 +23,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_Start_clicked()
 {
+    quantumChannel.isAtt = false;
+    quantumChannel.isCromDisp = false;
+    if (ui->checkBox_att->isChecked()){
+        quantumChannel.isAtt = true;
+    }
+    if (ui->checkBox_disp->isChecked()){
+        quantumChannel.isCromDisp = true;
+    }
+
     // Считываем параметры лазера
     laser.centralWavelength = ui->lineEdit_centralWavelength->text().toDouble();
     laser.phase = ui->lineEdit_phase->text().toDouble();
@@ -72,8 +82,37 @@ double interpolate(const TimeDomainData &data, double t, double dt) {
     return data.intensity[idx] * (1 - frac) + data.intensity[idx+1] * frac;
 }
 
+double generate_random_0_to_1() {
+    // Инициализация генератора
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+
+    // Распределение для целых чисел от 0 до 9999
+    static std::uniform_int_distribution<int> dist(0, 9999);
+
+    // Генерация числа и преобразование в диапазон [0.0, 1.0)
+    return dist(gen) / 10000.0;
+}
+
+double get_att (double att, double lengthChannel) {
+    return 1 - pow(10, -0.1 * att * lengthChannel);
+}
+
+bool is_photon_loss (const QuantumChannel &quantumChannel){
+    double num1 = generate_random_0_to_1();
+    qDebug() << num1;
+
+    double num2 = get_att(quantumChannel.channelAttenuation, quantumChannel.channelLength);
+    qDebug() << num2;
+    if (num1 > num2){
+        return false;
+    }
+    else
+        return true;
+}
+
 // Функция для генерации композиции импульсов с заданным периодом между ними
-TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses, double dt)
+TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses, double dt, const QuantumChannel &quantumChannel)
 {
     int N_single = laser.numberPoints;
 
@@ -96,6 +135,10 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const L
 
     for (int p = 0; p < numPulses; ++p) {
         int n_p = dist(gen); // Число фотонов в одном импульсе
+        if (n_p > 0 && quantumChannel.isAtt == true){
+            bool b = is_photon_loss(quantumChannel);
+            qDebug() << b;
+        }
         qDebug() << "В импульсе " << p + 1 << "фотонов: " << n_p;
         double scale_factor = (laser.averageCountPhotons != 0.0) ? (static_cast<double>(n_p) / laser.averageCountPhotons) : 0.0;
 
@@ -131,7 +174,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     TimeDomainData timeData;
     if (numPulses > 1 && singlePulse.time.size() >= 2) {
         double dt = singlePulse.time[1] - singlePulse.time[0];
-        timeData = generateCompositePulse(singlePulse, laser, numPulses, dt);
+        timeData = generateCompositePulse(singlePulse, laser, numPulses, dt, quantumChannel);
     }
     else {
         timeData = singlePulse;

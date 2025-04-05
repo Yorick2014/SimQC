@@ -29,6 +29,8 @@ struct QuantumChannel{
     double channelLength;
     double chromaticDispersion;
     double channelAttenuation;
+    bool isAtt;
+    bool isCromDisp; //хроматическая дисперсия
 };
 
 class Components
