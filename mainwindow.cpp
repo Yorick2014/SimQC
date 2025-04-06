@@ -104,6 +104,7 @@ double get_att (double att, double lengthChannel) {
 bool is_photon_loss (const QuantumChannel &quantumChannel){
     double num1 = generate_random_0_to_1();
     double num2 = get_att(quantumChannel.channelAttenuation, quantumChannel.channelLength);
+//    qDebug() << "att: " << num2;
     if (num1 > num2){
         return false;
     }
@@ -133,10 +134,11 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const L
     static std::mt19937 gen(rd());
     std::poisson_distribution<int> dist(laser.averageCountPhotons);
 
+    int global_count_p = 0;;
     for (int p = 0; p < numPulses; ++p) {
         int n_p = dist(gen); // Число фотонов в одном импульсе
         int count_p = n_p;
-        qDebug() << "В импульсе " << p + 1 << "было фотонов: " << n_p;
+//        qDebug() << "В импульсе " << p + 1 << "было фотонов: " << n_p;
         if (n_p > 0 && quantumChannel.isAtt == true){
             for (int i = 0; i < n_p; i++)
             {
@@ -144,7 +146,9 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const L
             }
         }
 
-        qDebug() << "В импульсе " << p + 1 << "осталось фотонов: " << count_p;
+//        qDebug() << "В импульсе " << p + 1 << "осталось фотонов: " << count_p;
+        if (count_p > 0)
+            global_count_p++;
         double scale_factor = (laser.averageCountPhotons != 0.0) ? (static_cast<double>(count_p) / laser.averageCountPhotons) : 0.0;
 
         int offset = p * shiftSamples;
@@ -154,6 +158,11 @@ TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const L
             }
         }
     }
+
+    qDebug() << "Кол-во отправленных импульсов: " << numPulses;
+    qDebug() << "Кол-во дошедших импульсов: " << global_count_p;
+    double pulseRelation { (double)global_count_p / (double)numPulses};
+    qDebug() << "Отношение отправленных импульсов к дошедшим " << pulseRelation;
 
     // массив временных точек
     for (int i = 0; i < N_composite; ++i) {
