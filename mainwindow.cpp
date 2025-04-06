@@ -78,100 +78,6 @@ void MainWindow::plotGraph(const Laser &laser) {
     ui->pulse_plot->replot();
 }
 
-double interpolate(const TimeDomainData &data, double t, double dt) {
-    int idx = static_cast<int>((t - data.time[0]) / dt);
-    if (idx < 0 || idx >= data.time.size()-1) return 0.0;
-    double frac = (t - data.time[idx]) / dt;
-    return data.intensity[idx] * (1 - frac) + data.intensity[idx+1] * frac;
-}
-
-double generate_random_0_to_1() {
-    // Инициализация генератора
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-
-    // Распределение для целых чисел от 0 до 9999
-    static std::uniform_int_distribution<int> dist(0, 9999);
-
-    // Генерация числа и преобразование в диапазон [0.0, 1.0)
-    return dist(gen) / 10000.0;
-}
-
-double get_att (double att, double lengthChannel) {
-    return 1 - pow(10, -0.1 * att * lengthChannel);
-}
-
-bool is_photon_loss (const QuantumChannel &quantumChannel){
-    double num1 = generate_random_0_to_1();
-    double num2 = get_att(quantumChannel.channelAttenuation, quantumChannel.channelLength);
-//    qDebug() << "att: " << num2;
-    if (num1 > num2){
-        return false;
-    }
-    else
-        return true;
-}
-
-// Функция для генерации композиции импульсов с заданным периодом между ними
-TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses, double dt, const QuantumChannel &quantumChannel)
-{
-    int N_single = laser.numberPoints;
-
-    // Перевод частоты генерации из МГц в Гц и вычисление периода
-    double repRateHz = laser.repRate * 1e6;
-    double T_sep = (repRateHz > 0.0) ? (1.0 / repRateHz) : 0.0;
-    int shiftSamples = static_cast<int>(std::round(T_sep / dt));
-
-    // Общая длина результирующего сигнала
-    int N_composite = (numPulses - 1) * shiftSamples + N_single;
-
-    TimeDomainData composite;
-    composite.time.resize(N_composite);
-    composite.intensity.resize(N_composite, 0.0);
-
-    // Инициализация генератора случайных чисел
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    std::poisson_distribution<int> dist(laser.averageCountPhotons);
-
-    int global_count_p = 0;;
-    for (int p = 0; p < numPulses; ++p) {
-        int n_p = dist(gen); // Число фотонов в одном импульсе
-        int count_p = n_p;
-//        qDebug() << "В импульсе " << p + 1 << "было фотонов: " << n_p;
-        if (n_p > 0 && quantumChannel.isAtt == true){
-            for (int i = 0; i < n_p; i++)
-            {
-                if (is_photon_loss(quantumChannel) == true) count_p--;
-            }
-        }
-
-//        qDebug() << "В импульсе " << p + 1 << "осталось фотонов: " << count_p;
-        if (count_p > 0)
-            global_count_p++;
-        double scale_factor = (laser.averageCountPhotons != 0.0) ? (static_cast<double>(count_p) / laser.averageCountPhotons) : 0.0;
-
-        int offset = p * shiftSamples;
-        for (int j = 0; j < N_single; ++j) {
-            if (offset + j < N_composite) {
-                composite.intensity[offset + j] += singlePulse.intensity[j] * scale_factor;
-            }
-        }
-    }
-
-    qDebug() << "Кол-во отправленных импульсов: " << numPulses;
-    qDebug() << "Кол-во дошедших импульсов: " << global_count_p;
-    double pulseRelation { (double)global_count_p / (double)numPulses};
-    qDebug() << "Отношение отправленных импульсов к дошедшим " << pulseRelation;
-
-    // массив временных точек
-    for (int i = 0; i < N_composite; ++i) {
-        composite.time[i] = i * dt;
-    }
-
-    return composite;
-}
-
 void MainWindow::plotTimeDomain(const Laser &laser)
 {
     Components components;
@@ -188,7 +94,8 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     TimeDomainData timeData;
     if (numPulses > 1 && singlePulse.time.size() >= 2) {
         double dt = singlePulse.time[1] - singlePulse.time[0];
-        timeData = generateCompositePulse(singlePulse, laser, numPulses, dt, quantumChannel);
+        // Вызов метода для построения графика во временной обл
+        timeData = components.generateCompositePulse(singlePulse, laser, numPulses, dt, quantumChannel);
     }
     else {
         timeData = singlePulse;
