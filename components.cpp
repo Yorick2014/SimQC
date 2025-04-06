@@ -222,7 +222,7 @@ TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePu
 
     qDebug() << "Кол-во отправленных импульсов: " << numPulses;
     qDebug() << "Кол-во дошедших импульсов: " << global_count_p; // Дошедших, но не факт, что принятых :)
-    double pulseRelation { (double)global_count_p / (double)numPulses}; // Отношение импульсов
+    double pulseRelation { static_cast<double>(global_count_p) / static_cast<double>(numPulses)}; // Отношение импульсов
     qDebug() << "Отношение отправленных импульсов к дошедшим " << pulseRelation;
 
     // массив временных точек
