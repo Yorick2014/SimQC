@@ -74,12 +74,12 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
     double sigma_nu = full_Width / (10.0 * 2.0 * std::sqrt(2.0 * std::log(2.0)));
     double t_FWHM = std::sqrt(std::log(2.0)) / (M_PI * sigma_nu);
 
-    double t_min = -15 * t_FWHM;
-    double t_max =  15 * t_FWHM;
-    double dt = (t_max - t_min) / (N_time - 1);
+    int N = spectrum.frequency.size(); // или laser.numberPoints
+    double dnu = (spectrum.frequency.last() - spectrum.frequency.first()) / (N - 1);
+    double dt = 1.0 / (N * dnu);
 
-    int N_freq = spectrum.frequency.size();
-    double dnu = (nu_Max - nu_Min) / (N_freq - 1);
+    double t_min = -0.5 * N * dt;
+    double t_max =  0.5 * N * dt;
 
     // Центральная длина волны из входного параметра (в метрах)
     double lambda0 = laser.centralWavelength;   // м
@@ -91,7 +91,7 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
         double t = t_min + i * dt;
         std::complex<double> sum(0.0, 0.0);
 
-        for (int j = 0; j < N_freq; ++j) {
+        for (int j = 0; j < N; ++j) {
             double nu = spectrum.frequency[j];
             double I_nu = spectrum.intensity[j];
             double amp = std::sqrt(I_nu);
