@@ -42,6 +42,7 @@ void MainWindow::on_pushButton_Start_clicked()
 
     quantumChannel.channelAttenuation = ui->lineEdit_att->text().toDouble();
     quantumChannel.channelLength = ui->lineEdit_length->text().toDouble();
+    quantumChannel.chromaticDispersion = ui->lineEdit_crom_disp->text().toDouble();
 
     // Выбор режима построения графика
     if (ui->radioButton_spec->isChecked()) {
@@ -83,7 +84,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     Components components;
     // 1) Получаем спектр и преобразуем его во временную область (одиночный импульс)
     SpectrumData spectrumData = components.get_spectrum(laser);
-    TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser);
+    TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser, quantumChannel);
 
     // 2) Читаем число импульсов (из lineEdit_num_pulse)
     int numPulses = ui->lineEdit_num_pulse->text().toInt();

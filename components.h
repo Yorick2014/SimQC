@@ -42,7 +42,7 @@ public:
     ~Components();
 
     SpectrumData get_spectrum(const Laser &laser);
-    TimeDomainData get_time_domain(const SpectrumData &spectrum, const Laser &laser);
+    TimeDomainData get_time_domain(const SpectrumData &spectrum, const Laser &laser, const QuantumChannel &quantumChannel);
     TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses,
                                           double dt, const QuantumChannel &quantumChannel);
 };
