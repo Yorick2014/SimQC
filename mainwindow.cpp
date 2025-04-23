@@ -4,10 +4,11 @@
 #include <QVector>
 #include <QDebug>
 #include <cmath>
+#include <random>
+#include <iomanip>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
@@ -22,6 +23,15 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_Start_clicked()
 {
+    quantumChannel.isAtt = false;
+    quantumChannel.isCromDisp = false;
+    if (ui->checkBox_att->isChecked()){
+        quantumChannel.isAtt = true;
+    }
+    if (ui->checkBox_disp->isChecked()){
+        quantumChannel.isCromDisp = true;
+    }
+
     // Считываем параметры лазера
     laser.centralWavelength = ui->lineEdit_centralWavelength->text().toDouble();
     laser.phase = ui->lineEdit_phase->text().toDouble();
@@ -29,6 +39,10 @@ void MainWindow::on_pushButton_Start_clicked()
     laser.averageCountPhotons = ui->lineEdit_averageCountPh->text().toDouble();
     laser.numberPoints = ui->lineEdit_N->text().toDouble();
     laser.repRate = ui->lineEdit_repRate->text().toDouble(); // частота в МГц
+
+    quantumChannel.channelAttenuation = ui->lineEdit_att->text().toDouble();
+    quantumChannel.channelLength = ui->lineEdit_length->text().toDouble();
+    quantumChannel.chromaticDispersion = ui->lineEdit_crom_disp->text().toDouble();
 
     // Выбор режима построения графика
     if (ui->radioButton_spec->isChecked()) {
@@ -65,56 +79,12 @@ void MainWindow::plotGraph(const Laser &laser) {
     ui->pulse_plot->replot();
 }
 
-double interpolate(const TimeDomainData &data, double t, double dt) {
-    int idx = static_cast<int>((t - data.time[0]) / dt);
-    if (idx < 0 || idx >= data.time.size()-1) return 0.0;
-    double frac = (t - data.time[idx]) / dt;
-    return data.intensity[idx] * (1 - frac) + data.intensity[idx+1] * frac;
-}
-
-// Функция для генерации композиции импульсов с заданным периодом между ними
-TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses, double dt)
-{
-    int N_single = laser.numberPoints;
-
-    // Перевод частоты генерации из МГц в Гц и вычисление периода
-    double repRateHz = laser.repRate * 1e6;
-    double T_sep = (repRateHz > 0.0) ? (1.0 / repRateHz) : 0.0;
-    int shiftSamples = static_cast<int>(std::round(T_sep / dt));
-
-    // Общая длина результирующего сигнала
-    int N_composite = (numPulses - 1) * shiftSamples + N_single;
-
-    TimeDomainData composite;
-    composite.time.resize(N_composite);
-    composite.intensity.resize(N_composite, 0.0);
-
-    // Накладываем копии одиночного импульса, сдвигая их на shiftSamples отсчетов
-    for (int p = 0; p < numPulses; ++p) {
-        int offset = p * shiftSamples;
-        for (int j = 0; j < N_single; ++j) {
-            if (offset + j < N_composite)
-                composite.intensity[offset + j] += singlePulse.intensity[j];
-        }
-    }
-
-    // массив временных точек
-//    double t0 = singlePulse.time.first();
-    for (int i = 0; i < N_composite; ++i) {
-        composite.time[i] = i * dt;
-    }
-//    qDebug() << "First intensity " << composite.intensity[0];
-//    qDebug() << "First time " << composite.time[0];
-
-    return composite;
-}
-
 void MainWindow::plotTimeDomain(const Laser &laser)
 {
     Components components;
     // 1) Получаем спектр и преобразуем его во временную область (одиночный импульс)
     SpectrumData spectrumData = components.get_spectrum(laser);
-    TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser);
+    TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser, quantumChannel);
 
     // 2) Читаем число импульсов (из lineEdit_num_pulse)
     int numPulses = ui->lineEdit_num_pulse->text().toInt();
@@ -125,7 +95,8 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     TimeDomainData timeData;
     if (numPulses > 1 && singlePulse.time.size() >= 2) {
         double dt = singlePulse.time[1] - singlePulse.time[0];
-        timeData = generateCompositePulse(singlePulse, laser, numPulses, dt);
+        // Вызов метода для построения графика во временной обл
+        timeData = components.generateCompositePulse(singlePulse, laser, numPulses, dt, quantumChannel);
     }
     else {
         timeData = singlePulse;
@@ -149,7 +120,6 @@ void MainWindow::plotTimeDomain(const Laser &laser)
             timeData.time[i] -= shiftTime;
         }
     }
-    qDebug() << "dt/N" << (singlePulse.time[1] - singlePulse.time[0]);
 
     // 3) Строим график во временной области
     ui->pulse_plot->clearGraphs();
@@ -161,8 +131,6 @@ void MainWindow::plotTimeDomain(const Laser &laser)
 
     if (!timeData.time.isEmpty() && !timeData.intensity.isEmpty()) {
         double tMin = timeData.time.first();
-        qDebug() << "tMin " << tMin;
-        qDebug() << "iMin " << timeData.intensity.first();
         double tMax = timeData.time.last();
         double iMax = *std::max_element(timeData.intensity.begin(), timeData.intensity.end());
         ui->pulse_plot->xAxis->setRange(tMin, tMax);

@@ -23,6 +23,9 @@ private slots:
 private:
     Ui::MainWindow *ui;
     Laser laser;
+    QuantumChannel quantumChannel;
+
+    double generate_random_0_to_1();
     void plotGraph(const Laser &laser);
     void plotTimeDomain(const Laser &laser);
 };
