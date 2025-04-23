@@ -59,6 +59,34 @@ double Components::gaussian_spectrum(double nu, double nu0, double sigma_nu)
     return exp(-pow((nu - nu0), 2) / (2 * pow(sigma_nu, 2)));
 }
 
+double calculate_spectrum_FWHM(const SpectrumData &spectrum)
+{
+    const auto &frequencies = spectrum.frequency;
+    const auto &intensities = spectrum.intensity;
+
+    double maxIntensity = *std::max_element(intensities.begin(), intensities.end());
+    double halfMax = maxIntensity * 0.5;
+
+    int leftIndex = -1, rightIndex = -1;
+
+    for (int i = 1; i < intensities.size(); ++i) {
+        if (intensities[i - 1] < halfMax && intensities[i] >= halfMax && leftIndex == -1) {
+            leftIndex = i;
+        }
+        if (intensities[i - 1] >= halfMax && intensities[i] < halfMax) {
+            rightIndex = i;
+        }
+    }
+
+    if (leftIndex != -1 && rightIndex != -1 && rightIndex > leftIndex) {
+        return frequencies[rightIndex] - frequencies[leftIndex];
+    }
+
+    return 0.0;
+}
+
+
+
 TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const Laser &laser, const QuantumChannel &quantumChannel)
 {
     TimeDomainData timeData;
@@ -69,8 +97,10 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
     double nu_Max = spectrum.frequency.last();
     double nu0 = 0.5 * (nu_Min + nu_Max);
 
-    // Оценка спектральной ширины для выбора временного окна
-    double full_Width = nu_Max - nu_Min;
+    // Точная ширина по уровню FWHM
+    double full_Width = calculate_spectrum_FWHM(spectrum);
+    qDebug() << "FWHM (frequency domain) = " << full_Width << "Hz";
+
     double sigma_nu = full_Width / (10.0 * 2.0 * std::sqrt(2.0 * std::log(2.0)));
     double t_FWHM = std::sqrt(std::log(2.0)) / (M_PI * sigma_nu);
 
