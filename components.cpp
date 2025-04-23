@@ -96,26 +96,24 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
             double I_nu = spectrum.intensity[j];
             double amp = std::sqrt(I_nu);
 
-            // Вычисляем длину волны для точки спектра (в м)
+            // Длина волны в м
             double lambda = SPEED_LIGHT / nu;
-            // Отклонение длин волн (в м)
             double deltaLambda = lambda - lambda0;
-            // Перевод deltaLambda из метров в нанометры: умножаем на 1e9
             double deltaLambda_nm = deltaLambda * 1e9;
 
-            // Круговая частота для точки (в рад/с)
+            // Омега
             double omega = 2.0 * M_PI * nu;
 
-            // Фазовый сдвиг от смещения длины волны.
-            // Если дисперсия включена, применяем формулу:
-            // φ = Δλ (в нм) · β (ps/(nm·km)) · z (km) · ω (рад/с) · (1e-12, перевод пс в с)
-            // => общий коэффициент: 1e-12, но поскольку deltaLambda уже в нм, можно записать:
-            double phi = 0.0;
+            // Хроматическая дисперсия как задержка
+            double delay = 0.0;
             if (quantumChannel.isCromDisp) {
-                phi = deltaLambda_nm * quantumChannel.chromaticDispersion * quantumChannel.channelLength * omega * 1e-12;
+                // β [ps/(nm·km)] * Δλ [нм] * L [km] = delay [ps]
+                delay = quantumChannel.chromaticDispersion * deltaLambda_nm * quantumChannel.channelLength; // в пс
+                delay *= 1e-12; // перевод в секунды
             }
-            // Фазовый множитель от временного сдвига (без дисперсии)
-            std::complex<double> phase = std::exp(std::complex<double>(0.0, 2.0 * M_PI * (nu - nu0) * t + phi));
+
+            double t_shifted = t - delay;
+            std::complex<double> phase = std::exp(std::complex<double>(0.0, 2.0 * M_PI * (nu - nu0) * t_shifted));
 
             sum += amp * phase * dnu;
         }
