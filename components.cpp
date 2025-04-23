@@ -59,32 +59,35 @@ double Components::gaussian_spectrum(double nu, double nu0, double sigma_nu)
     return exp(-pow((nu - nu0), 2) / (2 * pow(sigma_nu, 2)));
 }
 
-double calculate_spectrum_FWHM(const SpectrumData &spectrum)
+double calculate_fwhm_time(const std::vector<std::complex<double>> &E_time, double dt)
 {
-    const auto &frequencies = spectrum.frequency;
-    const auto &intensities = spectrum.intensity;
+    int N = E_time.size();
+    std::vector<double> intensity(N);
 
-    double maxIntensity = *std::max_element(intensities.begin(), intensities.end());
-    double halfMax = maxIntensity * 0.5;
+    for (int i = 0; i < N; ++i) {
+        intensity[i] = std::norm(E_time[i]);
+    }
 
-    int leftIndex = -1, rightIndex = -1;
+    double maxI = *std::max_element(intensity.begin(), intensity.end());
+    double halfMax = maxI * 0.5;
 
-    for (int i = 1; i < intensities.size(); ++i) {
-        if (intensities[i - 1] < halfMax && intensities[i] >= halfMax && leftIndex == -1) {
-            leftIndex = i;
+    int left = -1, right = -1;
+    for (int i = 1; i < N; ++i) {
+        if (intensity[i - 1] < halfMax && intensity[i] >= halfMax && left == -1) {
+            left = i;
         }
-        if (intensities[i - 1] >= halfMax && intensities[i] < halfMax) {
-            rightIndex = i;
+        if (intensity[i - 1] >= halfMax && intensity[i] < halfMax) {
+            right = i;
         }
     }
 
-    if (leftIndex != -1 && rightIndex != -1 && rightIndex > leftIndex) {
-        return frequencies[rightIndex] - frequencies[leftIndex];
+    if (left != -1 && right != -1 && right > left) {
+        double t_fwhm_sec = (right - left) * dt;
+        return t_fwhm_sec * 1e9; // в наносекундах
     }
 
     return 0.0;
 }
-
 
 
 TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const Laser &laser, const QuantumChannel &quantumChannel)
@@ -98,8 +101,7 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
     double nu0 = 0.5 * (nu_Min + nu_Max);
 
     // Точная ширина по уровню FWHM
-    double full_Width = calculate_spectrum_FWHM(spectrum);
-    qDebug() << "FWHM (frequency domain) = " << full_Width << "Hz";
+    double full_Width = nu_Max - nu_Min;
 
     double sigma_nu = full_Width / (10.0 * 2.0 * std::sqrt(2.0 * std::log(2.0)));
     double t_FWHM = std::sqrt(std::log(2.0)) / (M_PI * sigma_nu);
@@ -148,6 +150,13 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
             sum += amp * phase * dnu;
         }
         E_time[i] = sum;
+
+        if (quantumChannel.isCromDisp) {
+            double fwhm_time_ns = calculate_fwhm_time(E_time, dt);
+            qDebug() << "Pulse temporal FWHM (after dispersion):" << fwhm_time_ns << "ns";
+
+        }
+
     }
 
     // Вычисляем интенсивность как квадрат модуля комплексного поля.
