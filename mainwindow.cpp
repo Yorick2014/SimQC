@@ -82,11 +82,10 @@ void MainWindow::plotGraph(const Laser &laser) {
 void MainWindow::plotTimeDomain(const Laser &laser)
 {
     Components components;
-    // 1) Получаем спектр и преобразуем его во временную область (одиночный импульс)
+    // Получаем спектр и преобразуем его во временную область
     SpectrumData spectrumData = components.get_spectrum(laser);
     TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser, quantumChannel);
 
-    // 2) Читаем число импульсов (из lineEdit_num_pulse)
     int numPulses = ui->lineEdit_num_pulse->text().toInt();
     if (numPulses < 1) {
         numPulses = 1;
@@ -121,7 +120,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
         }
     }
 
-    // 3) Строим график во временной области
+    // Строим график во временной области
     ui->pulse_plot->clearGraphs();
     ui->pulse_plot->addGraph();
     ui->pulse_plot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 3));
@@ -138,7 +137,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     }
     ui->pulse_plot->replot();
 
-    // 4) Подсчёт энергии одного импульса (интеграл I(t) dt, делённый на число импульсов)
+    // Подсчёт энергии одного импульса (интеграл I(t) dt, делённый на число импульсов)
     double totalEnergy = 0.0;
     int N_time = timeData.time.size();
     for (int i = 0; i < N_time - 1; ++i) {

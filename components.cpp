@@ -111,9 +111,8 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
     double dt = 1.0 / (N * dnu);
 
     double t_min = -0.5 * N * dt;
-    double t_max =  0.5 * N * dt;
+//    double t_max =  0.5 * N * dt;
 
-    // Центральная длина волны из входного параметра (в метрах)
     double lambda0 = laser.centralWavelength;   // м
 
     // Массив комплексной амплитуды во временной области
@@ -128,13 +127,10 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
             double I_nu = spectrum.intensity[j];
             double amp = std::sqrt(I_nu);
 
-            // Длина волны в м
             double lambda = SPEED_LIGHT / nu;
             double deltaLambda = lambda - lambda0;
             double deltaLambda_nm = deltaLambda * 1e9;
-
-            // Омега
-            double omega = 2.0 * M_PI * nu;
+            // double omega = 2.0 * M_PI * nu;
 
             // Хроматическая дисперсия как задержка
             double delay = 0.0;
@@ -144,7 +140,7 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
                 delay *= 1e-12; // перевод в секунды
             }
 
-            double t_shifted = t - delay;
+            double t_shifted = t + delay;
             std::complex<double> phase = std::exp(std::complex<double>(0.0, 2.0 * M_PI * (nu - nu0) * t_shifted));
 
             sum += amp * phase * dnu;
@@ -154,9 +150,7 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
         if (quantumChannel.isCromDisp) {
             double fwhm_time_ns = calculate_fwhm_time(E_time, dt);
             qDebug() << "Pulse temporal FWHM (after dispersion):" << fwhm_time_ns << "ns";
-
         }
-
     }
 
     // Вычисляем интенсивность как квадрат модуля комплексного поля.
@@ -169,7 +163,6 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
         timeData.intensity.push_back(I_t);
     }
 
-    // Опционально: можно нормировать энергию импульса
     double sum_energy = 0.0;
     for (int i = 0; i < N_time - 1; ++i) {
         double I_mid = 0.5 * (timeData.intensity[i] + timeData.intensity[i+1]);
@@ -202,10 +195,8 @@ double get_att (double att, double lengthChannel) {
     return 1 - pow(10, -0.1 * att * lengthChannel);
 }
 
-bool is_photon_loss (const QuantumChannel &quantumChannel){
-    double num1 = generate_random_0_to_1();
-    double num2 = get_att(quantumChannel.channelAttenuation, quantumChannel.channelLength);
-//    qDebug() << "att: " << num2;
+bool is_photon_loss (double num1, double num2){
+
     if (num1 > num2){
         return false;
     }
@@ -243,7 +234,9 @@ TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePu
         if (n_p > 0 && quantumChannel.isAtt == true){
             for (int i = 0; i < n_p; i++)
             {
-                if (is_photon_loss(quantumChannel) == true) count_p--;
+                // потеря фотонов (затухание)
+                if (is_photon_loss(generate_random_0_to_1(),
+                                   get_att(quantumChannel.channelAttenuation, quantumChannel.channelLength)) == true) count_p--;
             }
         }
 
@@ -261,7 +254,7 @@ TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePu
     }
 
     qDebug() << "Кол-во отправленных импульсов: " << numPulses;
-    qDebug() << "Кол-во дошедших импульсов: " << global_count_p; // Дошедших, но не факт, что принятых :)
+    qDebug() << "Кол-во дошедших импульсов: " << global_count_p; // Дошедших, но не факт, что принятых
     double pulseRelation { static_cast<double>(global_count_p) / static_cast<double>(numPulses)}; // Отношение импульсов
     qDebug() << "Отношение отправленных импульсов к дошедшим " << pulseRelation;
 

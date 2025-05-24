@@ -33,6 +33,13 @@ struct QuantumChannel{
     bool isCromDisp; //хроматическая дисперсия
 };
 
+struct Photodetector{
+    int count_pulse;
+    int count_photons;
+    double quantum_efficiency;
+    double dead_time;
+};
+
 class Components
 {
 private:
