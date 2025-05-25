@@ -10,12 +10,14 @@ CONFIG += c++17
 
 SOURCES += \
     components.cpp \
+    detector.cpp \
     main.cpp \
     mainwindow.cpp \
     qcustomplot.cpp
 
 HEADERS += \
     components.h \
+    detector.h \
     mainwindow.h \
     qcustomplot.h
 

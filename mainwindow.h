@@ -28,5 +28,6 @@ private:
     double generate_random_0_to_1();
     void plotGraph(const Laser &laser);
     void plotTimeDomain(const Laser &laser);
+    void plotGenKeys(const Laser &laser);
 };
 #endif // MAINWINDOW_H

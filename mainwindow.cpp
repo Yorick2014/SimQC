@@ -53,6 +53,9 @@ void MainWindow::on_pushButton_Start_clicked()
         // Построение временной области с генерацией серии импульсов
         plotTimeDomain(laser);
     }
+    else if (ui->radioButton_gen_key->isChecked()){
+        plotGenKeys(laser);
+    }
 }
 
 void MainWindow::plotGraph(const Laser &laser) {
@@ -147,4 +150,26 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     }
     double pulseEnergy = totalEnergy / numPulses;
     qDebug() << "Energy of one pulse:" << pulseEnergy << "J";
+}
+
+void MainWindow::plotGenKeys(const Laser &laser)
+{
+    Components components;
+    // Получаем спектр и преобразуем его во временную область
+    SpectrumData spectrumData = components.get_spectrum(laser);
+    TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser, quantumChannel);
+    std::vector<int> photon_counts;
+
+    int num_pulses = ui->lineEdit_num_pulse->text().toInt();
+    if (num_pulses < 1) {
+        num_pulses = 1;
+    }
+
+    if (num_pulses > 0)
+    {
+        for (int i = 0; i < num_pulses; i++) {
+            photon_counts.push_back(components.get_photons(laser, quantumChannel));
+        }
+    }
+    qDebug() << photon_counts;
 }

@@ -100,12 +100,6 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
     double nu_Max = spectrum.frequency.last();
     double nu0 = 0.5 * (nu_Min + nu_Max);
 
-    // Точная ширина по уровню FWHM
-    double full_Width = nu_Max - nu_Min;
-
-    double sigma_nu = full_Width / (10.0 * 2.0 * std::sqrt(2.0 * std::log(2.0)));
-    double t_FWHM = std::sqrt(std::log(2.0)) / (M_PI * sigma_nu);
-
     int N = spectrum.frequency.size(); // или laser.numberPoints
     double dnu = (spectrum.frequency.last() - spectrum.frequency.first()) / (N - 1);
     double dt = 1.0 / (N * dnu);
@@ -147,13 +141,12 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
         }
         E_time[i] = sum;
 
-        if (quantumChannel.isCromDisp) {
-            double fwhm_time_ns = calculate_fwhm_time(E_time, dt);
-            qDebug() << "Pulse temporal FWHM (after dispersion):" << fwhm_time_ns << "ns";
-        }
+//        if (quantumChannel.isCromDisp) {
+//            double fwhm_time_ns = calculate_fwhm_time(E_time, dt);
+//            qDebug() << "Pulse temporal FWHM (after dispersion):" << fwhm_time_ns << "ns";
+//        }
     }
 
-    // Вычисляем интенсивность как квадрат модуля комплексного поля.
     timeData.time.reserve(N_time);
     timeData.intensity.reserve(N_time);
     for (int i = 0; i < N_time; ++i) {
@@ -180,14 +173,11 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
 }
 
 double generate_random_0_to_1() {
-    // Инициализация генератора
     static std::random_device rd;
     static std::mt19937 gen(rd());
-
-    // Распределение для целых чисел от 0 до 9999
     static std::uniform_int_distribution<int> dist(0, 9999);
 
-    // Генерация числа и преобразование в диапазон [0.0, 1.0)
+    // Диапазон [0.0, 1.0)
     return dist(gen) / 10000.0;
 }
 
@@ -204,8 +194,28 @@ bool is_photon_loss (double num1, double num2){
         return true;
 }
 
+int Components::get_photons (const Laser &laser, const QuantumChannel &quantumChannel){
+
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::poisson_distribution<int> dist(laser.averageCountPhotons);
+
+    int n_p = dist(gen); // Число фотонов в одном импульсе
+    int count_p = n_p;
+    if (n_p > 0 && quantumChannel.isAtt == true){
+        for (int i = 0; i < n_p; i++)
+        {
+            // потеря фотонов (затухание)
+            if (is_photon_loss(generate_random_0_to_1(),
+                               get_att(quantumChannel.channelAttenuation, quantumChannel.channelLength)) == true) count_p--;
+        }
+    }
+
+    return count_p;
+}
+
 // Функция для генерации композиции импульсов с заданным периодом между ними
-TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses, double dt, const QuantumChannel &quantumChannel)
+TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int num_pulses, double dt, const QuantumChannel &quantumChannel)
 {
     int N_single = laser.numberPoints;
 
@@ -215,7 +225,7 @@ TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePu
     int shiftSamples = static_cast<int>(std::round(T_sep / dt));
 
     // Общая длина результирующего сигнала
-    int N_composite = (numPulses - 1) * shiftSamples + N_single;
+    int N_composite = (num_pulses - 1) * shiftSamples + N_single;
 
     TimeDomainData composite;
     composite.time.resize(N_composite);
@@ -226,24 +236,13 @@ TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePu
     static std::mt19937 gen(rd());
     std::poisson_distribution<int> dist(laser.averageCountPhotons);
 
-    int global_count_p = 0;;
-    for (int p = 0; p < numPulses; ++p) {
-        int n_p = dist(gen); // Число фотонов в одном импульсе
-        int count_p = n_p;
-//        qDebug() << "В импульсе " << p + 1 << "было фотонов: " << n_p;
-        if (n_p > 0 && quantumChannel.isAtt == true){
-            for (int i = 0; i < n_p; i++)
-            {
-                // потеря фотонов (затухание)
-                if (is_photon_loss(generate_random_0_to_1(),
-                                   get_att(quantumChannel.channelAttenuation, quantumChannel.channelLength)) == true) count_p--;
-            }
-        }
+    int res_num_pulse = 0;
+    for (int p = 0; p < num_pulses; ++p) {
 
-//        qDebug() << "В импульсе " << p + 1 << "осталось фотонов: " << count_p;
-        if (count_p > 0)
-            global_count_p++;
-        double scale_factor = (laser.averageCountPhotons != 0.0) ? (static_cast<double>(count_p) / laser.averageCountPhotons) : 0.0;
+        int res_num_ph = get_photons(laser, quantumChannel); // получение числа фотонов
+        if (res_num_ph > 0)
+            res_num_pulse++;
+        double scale_factor = (laser.averageCountPhotons != 0.0) ? (static_cast<double>(res_num_ph) / laser.averageCountPhotons) : 0.0;
 
         int offset = p * shiftSamples;
         for (int j = 0; j < N_single; ++j) {
@@ -253,10 +252,10 @@ TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePu
         }
     }
 
-    qDebug() << "Кол-во отправленных импульсов: " << numPulses;
-    qDebug() << "Кол-во дошедших импульсов: " << global_count_p; // Дошедших, но не факт, что принятых
-    double pulseRelation { static_cast<double>(global_count_p) / static_cast<double>(numPulses)}; // Отношение импульсов
-    qDebug() << "Отношение отправленных импульсов к дошедшим " << pulseRelation;
+    qDebug() << "Кол-во отправленных импульсов: " << num_pulses;
+    qDebug() << "Кол-во дошедших импульсов: " << res_num_pulse; // Дошедших, но не факт, что принятых
+//    double pulseRelation { static_cast<double>(num_photons) / static_cast<double>(numPulses)}; // Отношение импульсов
+//    qDebug() << "Отношение отправленных импульсов к дошедшим " << pulseRelation;
 
     // массив временных точек
     for (int i = 0; i < N_composite; ++i) {
