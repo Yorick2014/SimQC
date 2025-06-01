@@ -152,24 +152,76 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     qDebug() << "Energy of one pulse:" << pulseEnergy << "J";
 }
 
+double gen_random_0_to_1() {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_int_distribution<int> dist(0, 9999);
+
+    // Диапазон [0.0, 1.0)
+    return dist(gen) / 10000.0;
+}
+
+void generatePhotonTimestamps(int numPulses, const std::vector<int>& numPhotons) {
+    // 1) Создаем внешний вектор строк для всех импульсов
+    std::vector<std::vector<double>> ph_time;
+    ph_time.resize(numPulses);
+
+    // 2) Для каждого импульса задаем размер внутреннего вектора по числу фотонов
+    for (int i = 0; i < numPulses; ++i) {
+        ph_time[i].resize(numPhotons[i]);
+        // 3) Генерируем временные метки и сразу выводим через qDebug()
+        for (unsigned int j = 0; j < ph_time[i].size(); ++j) {
+            ph_time[i][j] = gen_random_0_to_1();
+            qDebug() << "Pulse" << i << "Photon" << j << "timestamp:" << ph_time[i][j];
+        }
+    }
+}
+
 void MainWindow::plotGenKeys(const Laser &laser)
 {
     Components components;
     // Получаем спектр и преобразуем его во временную область
     SpectrumData spectrumData = components.get_spectrum(laser);
     TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser, quantumChannel);
-    std::vector<int> photon_counts;
+    std::vector<unsigned int> photon_counts;
+    std::vector<double> time_lables;
 
-    int num_pulses = ui->lineEdit_num_pulse->text().toInt();
-    if (num_pulses < 1) {
-        num_pulses = 1;
-    }
-
+    unsigned int num_pulses = ui->lineEdit_num_pulse->text().toInt();
+    unsigned int rows = num_pulses;       // количество строк
+    unsigned int columns = 0;    // количество столбцов
     if (num_pulses > 0)
     {
-        for (int i = 0; i < num_pulses; i++) {
-            photon_counts.push_back(components.get_photons(laser, quantumChannel));
+        for (unsigned int i = 0; i < num_pulses; i++) {
+            unsigned int ph = components.get_photons(laser, quantumChannel);
+            photon_counts.push_back(ph); // заполнение вектора импульсами с фотонами
+
+            if (ph > columns) columns = ph;
         }
     }
+
+    double** numbers{new double*[rows]{}};
+    // выделяем память для вложенных массивов
+    for (unsigned i{}; i < rows; i++)
+    {
+        numbers[i] = new double[columns]{};
+    }
+
+    // вводим данные для rows x columns
+        for (unsigned int i{}; i < rows; i++)
+        {
+            for (unsigned int j{}; j < photon_counts[i]; j++)
+            {
+                numbers[i][j] = gen_random_0_to_1();
+                qDebug() << numbers[i][j];
+            }
+        }
+
+    // удаление массивов
+    for (unsigned i{}; i < rows; i++)
+    {
+        delete[] numbers[i];
+    }
+    delete[] numbers;
+
     qDebug() << photon_counts;
 }
