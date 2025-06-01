@@ -161,20 +161,20 @@ double gen_random_0_to_1() {
     return dist(gen) / 10000.0;
 }
 
-void generatePhotonTimestamps(int numPulses, const std::vector<int>& numPhotons) {
-    // 1) Создаем внешний вектор строк для всех импульсов
+void gen_ph_timelabel(unsigned int numPulses, const std::vector<unsigned int>& numPhotons) {
     std::vector<std::vector<double>> ph_time;
     ph_time.resize(numPulses);
 
-    // 2) Для каждого импульса задаем размер внутреннего вектора по числу фотонов
-    for (int i = 0; i < numPulses; ++i) {
+    for (unsigned int i = 0; i < numPulses; ++i) {
         ph_time[i].resize(numPhotons[i]);
-        // 3) Генерируем временные метки и сразу выводим через qDebug()
+
         for (unsigned int j = 0; j < ph_time[i].size(); ++j) {
             ph_time[i][j] = gen_random_0_to_1();
-            qDebug() << "Pulse" << i << "Photon" << j << "timestamp:" << ph_time[i][j];
+            //qDebug() << "Pulse" << i + 1 << "Photon" << j + 1 << "time label:" << ph_time[i][j];
         }
     }
+
+    qDebug() << "Out ph_time:" << ph_time;
 }
 
 void MainWindow::plotGenKeys(const Laser &laser)
@@ -187,41 +187,17 @@ void MainWindow::plotGenKeys(const Laser &laser)
     std::vector<double> time_lables;
 
     unsigned int num_pulses = ui->lineEdit_num_pulse->text().toInt();
-    unsigned int rows = num_pulses;       // количество строк
-    unsigned int columns = 0;    // количество столбцов
     if (num_pulses > 0)
     {
         for (unsigned int i = 0; i < num_pulses; i++) {
             unsigned int ph = components.get_photons(laser, quantumChannel);
-            photon_counts.push_back(ph); // заполнение вектора импульсами с фотонами
-
-            if (ph > columns) columns = ph;
+            photon_counts.push_back(ph); // заполнение импульсами
         }
     }
+    //qDebug() << "Vector:" << photon_counts;
 
-    double** numbers{new double*[rows]{}};
-    // выделяем память для вложенных массивов
-    for (unsigned i{}; i < rows; i++)
-    {
-        numbers[i] = new double[columns]{};
-    }
 
-    // вводим данные для rows x columns
-        for (unsigned int i{}; i < rows; i++)
-        {
-            for (unsigned int j{}; j < photon_counts[i]; j++)
-            {
-                numbers[i][j] = gen_random_0_to_1();
-                qDebug() << numbers[i][j];
-            }
-        }
 
-    // удаление массивов
-    for (unsigned i{}; i < rows; i++)
-    {
-        delete[] numbers[i];
-    }
-    delete[] numbers;
-
-    qDebug() << photon_counts;
+    // временные метки
+    gen_ph_timelabel(num_pulses, photon_counts);
 }
