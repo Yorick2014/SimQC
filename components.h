@@ -52,8 +52,12 @@ public:
     int get_photons (const Laser &laser, const QuantumChannel &quantumChannel);
     TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses,
                                           double dt, const QuantumChannel &quantumChannel);
+
     void gen_ph_timelabel(unsigned int numPulses, const std::vector<unsigned int>& numPhotons,
-                                      std::vector<std::vector<double>>& ph_time, const Photodetector &detector);
+                                      std::vector<std::vector<double>>& ph_time, const Photodetector &detector,
+                                      std::vector<double> &time_slots, double &time);
+
+    void get_time_slot(unsigned int num_pulses, const Laser &laser, std::vector<double>& time_slots);
 };
 
 #endif // COMPONENTS_H

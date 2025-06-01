@@ -265,21 +265,32 @@ TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePu
 }
 
 void Components::gen_ph_timelabel(unsigned int numPulses, const std::vector<unsigned int>& numPhotons,
-                                  std::vector<std::vector<double>>& ph_time, const Photodetector &detector){
+                                  std::vector<std::vector<double>>& ph_time, const Photodetector &detector,
+                                  std::vector<double> &time_slots, double &time){
     ph_time.resize(numPulses);
+    double threshold = detector.quantum_efficiency / 100.0; // перевод QE из процентов
 
     for (unsigned int i = 0; i < numPulses; ++i) {
         ph_time[i].resize(numPhotons[i]);
 
         for (unsigned int j = 0; j < ph_time[i].size(); ++j) {
             double rand_num = generate_random_0_to_1();
-            // проверка QE
-            if (rand_num >= (detector.quantum_efficiency / 100)){
-                ph_time[i][j] = generate_random_0_to_1();
+
+            // проверка QE и присваивание временной метки
+            if (rand_num >= threshold){
+                double rand = generate_random_0_to_1();
+                ph_time[i][j] = time_slots[i] + rand * time;
             }
-            //qDebug() << "Pulse" << i + 1 << "Photon" << j + 1 << "time label:" << ph_time[i][j];
+            qDebug() << "Pulse" << i + 1 << "Photon" << j + 1 << "time label:" << ph_time[i][j];
         }
     }
 
     qDebug() << "Out ph_time:" << ph_time;
+}
+
+void Components::get_time_slot(unsigned int num_pulses, const Laser &laser, std::vector<double>& time_slots){
+
+    for(unsigned int i = 0; i < num_pulses; i++){
+        time_slots.push_back(i * (1 / (laser.repRate * 1e6)));
+    }
 }

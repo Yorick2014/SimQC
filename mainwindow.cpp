@@ -175,24 +175,28 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
     }
     //qDebug() << "Vector:" << photon_counts;
 
-    // временные метки
-    components.gen_ph_timelabel(num_pulses, photon_counts, matrix_pulses, detector);
-
+    // время импульса
     std::vector<double> time_pulse;
     std::vector<double> intensity_pulse;
     for (int i = 0; i < singlePulse.time.size(); i++) {
-    if(singlePulse.intensity[i] > 2e-12){
-        time_pulse.push_back(singlePulse.time[i]);
-        intensity_pulse.push_back(singlePulse.intensity[i]);
-    }
+        if(singlePulse.intensity[i] > 2e-12){
+            time_pulse.push_back(singlePulse.time[i]);
+            intensity_pulse.push_back(singlePulse.intensity[i]);
+        }
     }
     qDebug() << "Time (vector):" << time_pulse;
-//    qDebug() << "Интенсивность:" << intensity_pulse;
     double time = 0;
     for (unsigned int i = 0; i < time_pulse.size() ;i++ ) {
         time = abs(time_pulse[i]) + time;
     }
     qDebug() << "Time:" << time;
+
+    std::vector<double> time_slots;
+    components.get_time_slot(num_pulses, laser, time_slots);
+    qDebug() << "Time slot:" << time_slots;
+
+    // временные метки
+    components.gen_ph_timelabel(num_pulses, photon_counts, matrix_pulses, detector, time_slots, time);
 
     ui->pulse_plot->clearGraphs();
     ui->pulse_plot->addGraph();
