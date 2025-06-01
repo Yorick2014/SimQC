@@ -177,4 +177,36 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
 
     // временные метки
     components.gen_ph_timelabel(num_pulses, photon_counts, matrix_pulses, detector);
+
+    std::vector<double> time_pulse;
+    std::vector<double> intensity_pulse;
+    for (int i = 0; i < singlePulse.time.size(); i++) {
+    if(singlePulse.intensity[i] > 2e-12){
+        time_pulse.push_back(singlePulse.time[i]);
+        intensity_pulse.push_back(singlePulse.intensity[i]);
+    }
+    }
+    qDebug() << "Time (vector):" << time_pulse;
+//    qDebug() << "Интенсивность:" << intensity_pulse;
+    double time = 0;
+    for (unsigned int i = 0; i < time_pulse.size() ;i++ ) {
+        time = abs(time_pulse[i]) + time;
+    }
+    qDebug() << "Time:" << time;
+
+    ui->pulse_plot->clearGraphs();
+    ui->pulse_plot->addGraph();
+    ui->pulse_plot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 3));
+    ui->pulse_plot->graph(0)->setData(singlePulse.time, singlePulse.intensity);
+    ui->pulse_plot->xAxis->setLabel("Время (с)");
+    ui->pulse_plot->yAxis->setLabel("Интенсивность (Вт)");
+
+    if (!singlePulse.time.isEmpty() && !singlePulse.intensity.isEmpty()) {
+        double tMin = singlePulse.time.first();
+        double tMax = singlePulse.time.last();
+        double iMax = *std::max_element(singlePulse.intensity.begin(), singlePulse.intensity.end());
+        ui->pulse_plot->xAxis->setRange(tMin, tMax);
+        ui->pulse_plot->yAxis->setRange(0, iMax);
+    }
+    ui->pulse_plot->replot();
 }
