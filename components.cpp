@@ -263,3 +263,23 @@ TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePu
     }
     return composite;
 }
+
+void Components::gen_ph_timelabel(unsigned int numPulses, const std::vector<unsigned int>& numPhotons,
+                                  std::vector<std::vector<double>>& ph_time, const Photodetector &detector){
+    ph_time.resize(numPulses);
+
+    for (unsigned int i = 0; i < numPulses; ++i) {
+        ph_time[i].resize(numPhotons[i]);
+
+        for (unsigned int j = 0; j < ph_time[i].size(); ++j) {
+            double rand_num = generate_random_0_to_1();
+            // проверка QE
+            if (rand_num >= (detector.quantum_efficiency / 100)){
+                ph_time[i][j] = generate_random_0_to_1();
+            }
+            //qDebug() << "Pulse" << i + 1 << "Photon" << j + 1 << "time label:" << ph_time[i][j];
+        }
+    }
+
+    qDebug() << "Out ph_time:" << ph_time;
+}

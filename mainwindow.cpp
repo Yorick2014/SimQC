@@ -44,6 +44,10 @@ void MainWindow::on_pushButton_Start_clicked()
     quantumChannel.channelLength = ui->lineEdit_length->text().toDouble();
     quantumChannel.chromaticDispersion = ui->lineEdit_crom_disp->text().toDouble();
 
+    detector.quantum_efficiency = ui->lineEdit_QE->text().toDouble();
+    detector.dead_time = ui->lineEdit_dead_time->text().toDouble();
+    detector.time_slot = ui->lineEdit_time_slot->text().toDouble();
+
     // Выбор режима построения графика
     if (ui->radioButton_spec->isChecked()) {
         // Построение спектра
@@ -54,7 +58,7 @@ void MainWindow::on_pushButton_Start_clicked()
         plotTimeDomain(laser);
     }
     else if (ui->radioButton_gen_key->isChecked()){
-        plotGenKeys(laser);
+        plotGenKeys(laser, detector);
     }
 }
 
@@ -152,39 +156,14 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     qDebug() << "Energy of one pulse:" << pulseEnergy << "J";
 }
 
-double gen_random_0_to_1() {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    static std::uniform_int_distribution<int> dist(0, 9999);
-
-    // Диапазон [0.0, 1.0)
-    return dist(gen) / 10000.0;
-}
-
-void gen_ph_timelabel(unsigned int numPulses, const std::vector<unsigned int>& numPhotons) {
-    std::vector<std::vector<double>> ph_time;
-    ph_time.resize(numPulses);
-
-    for (unsigned int i = 0; i < numPulses; ++i) {
-        ph_time[i].resize(numPhotons[i]);
-
-        for (unsigned int j = 0; j < ph_time[i].size(); ++j) {
-            ph_time[i][j] = gen_random_0_to_1();
-            //qDebug() << "Pulse" << i + 1 << "Photon" << j + 1 << "time label:" << ph_time[i][j];
-        }
-    }
-
-    qDebug() << "Out ph_time:" << ph_time;
-}
-
-void MainWindow::plotGenKeys(const Laser &laser)
+void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
 {
     Components components;
     // Получаем спектр и преобразуем его во временную область
     SpectrumData spectrumData = components.get_spectrum(laser);
     TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser, quantumChannel);
-    std::vector<unsigned int> photon_counts;
-    std::vector<double> time_lables;
+    std::vector<unsigned int> photon_counts; // стартовый вектор импульсов
+    std::vector<std::vector<double>> matrix_pulses; // матрица импульсов с фотонами
 
     unsigned int num_pulses = ui->lineEdit_num_pulse->text().toInt();
     if (num_pulses > 0)
@@ -196,8 +175,6 @@ void MainWindow::plotGenKeys(const Laser &laser)
     }
     //qDebug() << "Vector:" << photon_counts;
 
-
-
     // временные метки
-    gen_ph_timelabel(num_pulses, photon_counts);
+    components.gen_ph_timelabel(num_pulses, photon_counts, matrix_pulses, detector);
 }

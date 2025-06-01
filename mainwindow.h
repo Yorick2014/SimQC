@@ -24,10 +24,11 @@ private:
     Ui::MainWindow *ui;
     Laser laser;
     QuantumChannel quantumChannel;
+    Photodetector detector;
 
     double generate_random_0_to_1();
     void plotGraph(const Laser &laser);
     void plotTimeDomain(const Laser &laser);
-    void plotGenKeys(const Laser &laser);
+    void plotGenKeys(const Laser &laser, const Photodetector &detector);
 };
 #endif // MAINWINDOW_H

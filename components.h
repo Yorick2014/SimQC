@@ -34,10 +34,9 @@ struct QuantumChannel{
 };
 
 struct Photodetector{
-    int count_pulse;
-    int count_photons;
     double quantum_efficiency;
     double dead_time;
+    double time_slot;
 };
 
 class Components
@@ -53,6 +52,8 @@ public:
     int get_photons (const Laser &laser, const QuantumChannel &quantumChannel);
     TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses,
                                           double dt, const QuantumChannel &quantumChannel);
+    void gen_ph_timelabel(unsigned int numPulses, const std::vector<unsigned int>& numPhotons,
+                                      std::vector<std::vector<double>>& ph_time, const Photodetector &detector);
 };
 
 #endif // COMPONENTS_H
