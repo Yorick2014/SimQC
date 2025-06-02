@@ -184,7 +184,7 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
             intensity_pulse.push_back(singlePulse.intensity[i]);
         }
     }
-    qDebug() << "Time (vector):" << time_pulse;
+//    qDebug() << "Time (vector):" << time_pulse;
     double time = 0;
     for (unsigned int i = 0; i < time_pulse.size() ;i++ ) {
         time = abs(time_pulse[i]) + time;
@@ -197,6 +197,8 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
 
     // временные метки
     components.gen_ph_timelabel(num_pulses, photon_counts, matrix_pulses, detector, time_slots, time);
+
+    components.reg_pulses(matrix_pulses, detector, time_slots);
 
     ui->pulse_plot->clearGraphs();
     ui->pulse_plot->addGraph();

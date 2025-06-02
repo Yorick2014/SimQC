@@ -277,12 +277,14 @@ void Components::gen_ph_timelabel(unsigned int numPulses, const std::vector<unsi
             double rand_num = generate_random_0_to_1();
 
             // проверка QE и присваивание временной метки
-            if (rand_num >= threshold){
-                double rand = generate_random_0_to_1();
-                ph_time[i][j] = time_slots[i] + rand * time;
+            if (rand_num >= threshold && rand_num > 0){
+                ph_time[i][j] = time_slots[i] + rand_num * time;
             }
-            qDebug() << "Pulse" << i + 1 << "Photon" << j + 1 << "time label:" << ph_time[i][j];
+//            qDebug() << "Pulse" << i + 1 << "Photon" << j + 1 << "time label:" << ph_time[i][j];
+            qDebug() << time;
         }
+
+        std::sort(ph_time[i].begin(), ph_time[i].end());
     }
 
     qDebug() << "Out ph_time:" << ph_time;
@@ -290,7 +292,21 @@ void Components::gen_ph_timelabel(unsigned int numPulses, const std::vector<unsi
 
 void Components::get_time_slot(unsigned int num_pulses, const Laser &laser, std::vector<double>& time_slots){
 
-    for(unsigned int i = 0; i < num_pulses; i++){
+    for(unsigned int i = 1; i <= num_pulses; i++){
         time_slots.push_back(i * (1 / (laser.repRate * 1e6)));
+    }
+}
+
+void Components::reg_pulses(std::vector<std::vector<double>>& ph_time,
+                            const Photodetector &detector, std::vector<double> &time_slots){
+
+    for (unsigned int i = 0; i <  ph_time.size(); ++i) {
+
+        for (unsigned int j = 0; j < ph_time[i].size(); ++j) {
+            if (ph_time[i][j] >= time_slots[i] && ph_time[i][j] <= time_slots[i] + detector.dead_time){
+                qDebug() << "Регистрация импульса";
+                break;
+            }
+        }
     }
 }

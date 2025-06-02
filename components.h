@@ -58,6 +58,9 @@ public:
                                       std::vector<double> &time_slots, double &time);
 
     void get_time_slot(unsigned int num_pulses, const Laser &laser, std::vector<double>& time_slots);
+
+    void reg_pulses(std::vector<std::vector<double>>& ph_time,
+                                const Photodetector &detector, std::vector<double> &time_slots);
 };
 
 #endif // COMPONENTS_H
