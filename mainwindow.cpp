@@ -153,7 +153,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
         totalEnergy += I_avg * dt;
     }
     double pulseEnergy = totalEnergy / numPulses;
-    qDebug() << "Energy of one pulse:" << pulseEnergy << "J";
+//    qDebug() << "Energy of one pulse:" << pulseEnergy << "J";
 }
 
 void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
@@ -189,30 +189,53 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
     for (unsigned int i = 0; i < time_pulse.size() ;i++ ) {
         time = abs(time_pulse[i]) + time;
     }
-    qDebug() << "Time:" << time;
+//    qDebug() << "Time:" << time;
 
     std::vector<double> time_slots;
     components.get_time_slot(num_pulses, laser, time_slots, detector);
-    qDebug() << "Time slot:" << time_slots;
+//    qDebug() << "Time slot:" << time_slots;
 
     // временные метки
     components.gen_ph_timelabel(num_pulses, photon_counts, matrix_pulses, detector, time_slots, time);
-    double time_reg = 0;
-    components.reg_pulses(matrix_pulses, detector, time_slots, time_reg);
+    std::vector<double> time_reg;
+    int num_reg_pulses = components.reg_pulses(matrix_pulses, detector, time_slots, time_reg);
 
-    ui->pulse_plot->clearGraphs();
-    ui->pulse_plot->addGraph();
-    ui->pulse_plot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 3));
-    ui->pulse_plot->graph(0)->setData(singlePulse.time, singlePulse.intensity);
-    ui->pulse_plot->xAxis->setLabel("Время (с)");
-    ui->pulse_plot->yAxis->setLabel("Интенсивность (Вт)");
-
-    if (!singlePulse.time.isEmpty() && !singlePulse.intensity.isEmpty()) {
-        double tMin = singlePulse.time.first();
-        double tMax = singlePulse.time.last();
-        double iMax = *std::max_element(singlePulse.intensity.begin(), singlePulse.intensity.end());
-        ui->pulse_plot->xAxis->setRange(tMin, tMax);
-        ui->pulse_plot->yAxis->setRange(0, iMax);
+    if(time_reg.size() <= 1)
+    {
+        qDebug() << "Не было зарегистрированных импульсов";
     }
-    ui->pulse_plot->replot();
+    else{
+        qDebug() << "Кол-во зарег. импульсов: " << num_reg_pulses;
+//        qDebug() << "Vector:" << time_reg;
+        QVector<double> value_pulse;
+        value_pulse.resize(num_reg_pulses);
+        QVector<double> time_pulse;
+        time_pulse.resize(num_reg_pulses);
+
+        for (int i = 0; i < num_reg_pulses; i++ ) {
+            value_pulse.fill(1);
+            time_pulse[i] = time_reg[i + 1];
+        }
+//        qDebug() << value_pulse;
+//        qDebug() << time_pulse;
+
+        ui->pulse_plot->clearGraphs();
+
+        QCPGraph *stemPlot = ui->pulse_plot->addGraph();
+        stemPlot->setLineStyle(QCPGraph::lsImpulse);
+
+        stemPlot->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 5));
+        stemPlot->setData(time_pulse, value_pulse);
+
+        ui->pulse_plot->xAxis->setLabel("Время (с)");
+        ui->pulse_plot->yAxis->setLabel("Число фотонов");
+        if (!time_pulse.isEmpty() && !value_pulse.isEmpty()) {
+            double tMin = time_pulse.first();
+            double tMax = time_pulse.last();
+            double iMax = *std::max_element(value_pulse.begin(), value_pulse.end());
+            ui->pulse_plot->xAxis->setRange(tMin + tMin * 0.2, tMax + tMax * 0.2);
+            ui->pulse_plot->yAxis->setRange(0, iMax + 0.3);
+        }
+        ui->pulse_plot->replot();
+    }
 }
