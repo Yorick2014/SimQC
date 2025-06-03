@@ -3,6 +3,9 @@
 #include "ui_mainwindow.h"
 #include <QVector>
 #include <QDebug>
+#include <QFile>
+#include <QTextStream>
+#include <QDir>
 #include <cmath>
 #include <random>
 #include <iomanip>
@@ -225,6 +228,13 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
 //        qDebug() << value_pulse;
 //        qDebug() << time_pulse;
 
+        // вывод в файл
+        save_results_to_file(num_reg_pulses, num_pulses,
+                             ui->lineEdit_repRate->text().toDouble(),
+                             ui->lineEdit_QE->text().toDouble(),
+                             ui->lineEdit_dead_time->text().toDouble(),
+                             ui->lineEdit_time_slot->text().toDouble());
+
         ui->pulse_plot->clearGraphs();
 
         QCPGraph *stemPlot = ui->pulse_plot->addGraph();
@@ -243,5 +253,31 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
             ui->pulse_plot->yAxis->setRange(0, iMax + 0.3);
         }
         ui->pulse_plot->replot();
+    }
+}
+
+void MainWindow::save_results_to_file(int num_reg_pulses, int total_sent_pulses,
+                                      double repRate, double QE, double dead_time, double time_slot) {
+    double result = (double)num_reg_pulses / total_sent_pulses;
+
+    QString filename = QDir::currentPath() + "/simulation_results.csv";
+    QFile file(filename);
+    bool fileExists = file.exists();
+
+    if (file.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream out(&file);
+
+        // Заголовки только если файл создаётся впервые
+        if (!fileExists) {
+            out << "repRate_MHz,quantum_eff,dead_time_ns,time_slot_ns,num_registered,total_sent,result\n";
+        }
+
+        out << repRate << "," << QE << "," << dead_time << "," << time_slot << ","
+            << num_reg_pulses << "," << total_sent_pulses << "," << result << "\n";
+
+        file.close();
+        qDebug() << "Результаты сохранены в" << filename;
+    } else {
+        qDebug() << "Ошибка открытия файла для записи результатов!";
     }
 }
