@@ -45,8 +45,8 @@ void MainWindow::on_pushButton_Start_clicked()
     quantumChannel.chromaticDispersion = ui->lineEdit_crom_disp->text().toDouble();
 
     detector.quantum_efficiency = ui->lineEdit_QE->text().toDouble();
-    detector.dead_time = ui->lineEdit_dead_time->text().toDouble();
-    detector.time_slot = ui->lineEdit_time_slot->text().toDouble();
+    detector.dead_time = ui->lineEdit_dead_time->text().toDouble() * 1e-9;
+    detector.time_slot = ui->lineEdit_time_slot->text().toDouble() * 1e-9;
 
     // Выбор режима построения графика
     if (ui->radioButton_spec->isChecked()) {
@@ -192,13 +192,13 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
     qDebug() << "Time:" << time;
 
     std::vector<double> time_slots;
-    components.get_time_slot(num_pulses, laser, time_slots);
+    components.get_time_slot(num_pulses, laser, time_slots, detector);
     qDebug() << "Time slot:" << time_slots;
 
     // временные метки
     components.gen_ph_timelabel(num_pulses, photon_counts, matrix_pulses, detector, time_slots, time);
-
-    components.reg_pulses(matrix_pulses, detector, time_slots);
+    double time_reg = 0;
+    components.reg_pulses(matrix_pulses, detector, time_slots, time_reg);
 
     ui->pulse_plot->clearGraphs();
     ui->pulse_plot->addGraph();

@@ -281,7 +281,7 @@ void Components::gen_ph_timelabel(unsigned int numPulses, const std::vector<unsi
                 ph_time[i][j] = time_slots[i] + rand_num * time;
             }
 //            qDebug() << "Pulse" << i + 1 << "Photon" << j + 1 << "time label:" << ph_time[i][j];
-            qDebug() << time;
+//            qDebug() << time;
         }
 
         std::sort(ph_time[i].begin(), ph_time[i].end());
@@ -290,21 +290,25 @@ void Components::gen_ph_timelabel(unsigned int numPulses, const std::vector<unsi
     qDebug() << "Out ph_time:" << ph_time;
 }
 
-void Components::get_time_slot(unsigned int num_pulses, const Laser &laser, std::vector<double>& time_slots){
+void Components::get_time_slot(unsigned int num_pulses, const Laser &laser, std::vector<double>& time_slots, const Photodetector &detector){
 
     for(unsigned int i = 1; i <= num_pulses; i++){
-        time_slots.push_back(i * (1 / (laser.repRate * 1e6)));
+        time_slots.push_back(i * (1 / (laser.repRate * 1e6)) + (detector.time_slot / 2));
     }
 }
 
 void Components::reg_pulses(std::vector<std::vector<double>>& ph_time,
-                            const Photodetector &detector, std::vector<double> &time_slots){
+                            const Photodetector &detector, std::vector<double> &time_slots, double &time_reg){
+    time_reg = time_slots[0];
 
     for (unsigned int i = 0; i <  ph_time.size(); ++i) {
 
         for (unsigned int j = 0; j < ph_time[i].size(); ++j) {
-            if (ph_time[i][j] >= time_slots[i] && ph_time[i][j] <= time_slots[i] + detector.dead_time){
-                qDebug() << "Регистрация импульса";
+            if (ph_time[i][j] >= time_slots[i] - (detector.time_slot / 2) &&
+                    ph_time[i][j] <= time_slots[i] + (detector.time_slot / 2) &&
+                    ph_time[i][j] >= time_reg + detector.dead_time){
+                time_reg = ph_time[i][j];
+                qDebug() << "Регистрация импульса" << time_reg;
                 break;
             }
         }
