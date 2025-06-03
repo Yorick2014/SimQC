@@ -277,7 +277,7 @@ void Components::gen_ph_timelabel(unsigned int numPulses, const std::vector<unsi
             double rand_num = generate_random_0_to_1();
 
             // проверка QE и присваивание временной метки
-            if (rand_num >= threshold && rand_num > 0){
+            if (rand_num <= threshold && rand_num > 0){
                 ph_time[i][j] = time_slots[i] + rand_num * time;
             }
 //            qDebug() << "Pulse" << i + 1 << "Photon" << j + 1 << "time label:" << ph_time[i][j];
@@ -292,28 +292,56 @@ void Components::gen_ph_timelabel(unsigned int numPulses, const std::vector<unsi
 
 void Components::get_time_slot(unsigned int num_pulses, const Laser &laser, std::vector<double>& time_slots, const Photodetector &detector){
 
-    for(unsigned int i = 1; i <= num_pulses; i++){
-        time_slots.push_back(i * (1 / (laser.repRate * 1e6)) + (detector.time_slot / 2));
+    double step = 1.0 / (laser.repRate * 1e6);
+
+    time_slots.clear();
+
+    for (unsigned int i = 0; i < num_pulses; ++i) {
+        time_slots.push_back(i * step);
     }
 }
 
 int Components::reg_pulses(std::vector<std::vector<double>>& ph_time,
                             const Photodetector &detector, std::vector<double> &time_slots, std::vector<double> &time_reg){
-    time_reg.push_back(time_slots[0]);
+
     int num_reg_pulses = 0;
+    double detector_dead = detector.dead_time;
+    double slot_duration = detector.time_slot;
+    double last_registered_time = -1e9;
 
     for (unsigned int i = 0; i <  ph_time.size(); ++i) {
-
+        double left = time_slots[i] - slot_duration / 2;
+        double right = time_slots[i] + slot_duration / 2;
         for (unsigned int j = 0; j < ph_time[i].size(); ++j) {
-            if (ph_time[i][j] >= time_slots[i] - (detector.time_slot / 2) &&
-                    ph_time[i][j] <= time_slots[i] + (detector.time_slot / 2) &&
-                    ph_time[i][j] >= time_reg[i] + detector.dead_time){
-                time_reg.push_back(ph_time[i][j]);
+
+            double t = ph_time[i][j];
+//            qDebug() << "Импульс:" << ph_time[i][j];
+
+            if (t < left)
+                continue;;
+
+            if (t > right)
+                break;
+
+            if (t >= last_registered_time + detector_dead){
+                time_reg.push_back(t);
+                last_registered_time = t;
                 num_reg_pulses++;
-//                qDebug() << "Регистрация импульса";
+//                qDebug() << "Регистрация импульса:" << t;
                 break;
             }
         }
     }
     return num_reg_pulses;
 }
+//            if (ph_time[i][j] >= time_slots[i] - (detector.time_slot / 2) &&
+//                    ph_time[i][j] <= time_slots[i] + (detector.time_slot / 2) &&
+//                    ph_time[i][j] > time_slots[i] + detector.dead_time){
+//                time_reg.push_back(ph_time[i][j]);
+//                num_reg_pulses++;
+
+//                qDebug() << "Регистрация импульса:" << time_reg[i];
+//                qDebug() << "dead time:" << detector.dead_time;
+//                qDebug() << "Регистрация импульса + dead time:" << time_reg[i] + detector.dead_time;
+//                break;
+//            }

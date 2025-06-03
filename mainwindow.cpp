@@ -45,8 +45,8 @@ void MainWindow::on_pushButton_Start_clicked()
     quantumChannel.chromaticDispersion = ui->lineEdit_crom_disp->text().toDouble();
 
     detector.quantum_efficiency = ui->lineEdit_QE->text().toDouble();
-    detector.dead_time = ui->lineEdit_dead_time->text().toDouble() * 1e-9;
-    detector.time_slot = ui->lineEdit_time_slot->text().toDouble() * 1e-9;
+    detector.dead_time = ui->lineEdit_dead_time->text().toDouble();
+    detector.time_slot = ui->lineEdit_time_slot->text().toDouble();
 
     // Выбор режима построения графика
     if (ui->radioButton_spec->isChecked()) {
@@ -152,7 +152,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
         double I_avg = 0.5 * (timeData.intensity[i] + timeData.intensity[i+1]);
         totalEnergy += I_avg * dt;
     }
-    double pulseEnergy = totalEnergy / numPulses;
+//    double pulseEnergy = totalEnergy / numPulses;
 //    qDebug() << "Energy of one pulse:" << pulseEnergy << "J";
 }
 
@@ -206,6 +206,12 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
     }
     else{
         qDebug() << "Кол-во зарег. импульсов: " << num_reg_pulses;
+        ui->lineEdit_count_pulses->clear();
+        ui->lineEdit_percent_pulses->clear();
+        ui->lineEdit_count_pulses->setText(QString::number(num_reg_pulses)); // число принятых импульсов
+        double result = (num_reg_pulses * 1.0) / num_pulses;
+        ui->lineEdit_percent_pulses->setText(QString::number(result, 'f', 2)); // отношение принятых имп к отправ.
+
 //        qDebug() << "Vector:" << time_reg;
         QVector<double> value_pulse;
         value_pulse.resize(num_reg_pulses);

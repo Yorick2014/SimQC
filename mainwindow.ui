@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>889</width>
+    <width>1060</width>
     <height>532</height>
    </rect>
   </property>
@@ -393,7 +393,7 @@ p, li { white-space: pre-wrap; }
           <item row="2" column="1">
            <widget class="QLineEdit" name="lineEdit_time_slot">
             <property name="text">
-             <string>5</string>
+             <string>8e-9</string>
             </property>
            </widget>
           </item>
@@ -414,7 +414,7 @@ p, li { white-space: pre-wrap; }
           <item row="1" column="3">
            <widget class="QLineEdit" name="lineEdit_dead_time">
             <property name="text">
-             <string>2</string>
+             <string>2e-9</string>
             </property>
            </widget>
           </item>
@@ -485,7 +485,7 @@ p, li { white-space: pre-wrap; }
             <rect>
              <x>360</x>
              <y>10</y>
-             <width>421</width>
+             <width>341</width>
              <height>90</height>
             </rect>
            </property>
@@ -543,7 +543,7 @@ p, li { white-space: pre-wrap; }
             <item row="1" column="1">
              <widget class="QRadioButton" name="radioButton_gen_key">
               <property name="text">
-               <string>Скорость генерации ключа</string>
+               <string>Генерации ключа</string>
               </property>
              </widget>
             </item>
@@ -622,6 +622,52 @@ p, li { white-space: pre-wrap; }
             <string>Стоп</string>
            </property>
           </widget>
+          <widget class="QLineEdit" name="lineEdit_count_pulses">
+           <property name="geometry">
+            <rect>
+             <x>880</x>
+             <y>30</y>
+             <width>113</width>
+             <height>25</height>
+            </rect>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="lineEdit_percent_pulses">
+           <property name="geometry">
+            <rect>
+             <x>880</x>
+             <y>60</y>
+             <width>113</width>
+             <height>25</height>
+            </rect>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label">
+           <property name="geometry">
+            <rect>
+             <x>730</x>
+             <y>30</y>
+             <width>131</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Счётчик фотонов</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_2">
+           <property name="geometry">
+            <rect>
+             <x>710</x>
+             <y>60</y>
+             <width>161</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Отношение принятых</string>
+           </property>
+          </widget>
          </widget>
         </item>
         <item row="1" column="0">
@@ -645,7 +691,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>889</width>
+     <width>1060</width>
      <height>22</height>
     </rect>
    </property>
