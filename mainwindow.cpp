@@ -37,7 +37,6 @@ void MainWindow::on_pushButton_Start_clicked()
 
     // Считываем параметры лазера
     laser.centralWavelength = ui->lineEdit_centralWavelength->text().toDouble();
-    laser.phase = ui->lineEdit_phase->text().toDouble();
     laser.pulseDuration = ui->lineEdit_pulseDuration->text().toDouble();
     laser.averageCountPhotons = ui->lineEdit_averageCountPh->text().toDouble();
     laser.numberPoints = ui->lineEdit_N->text().toDouble();
@@ -51,6 +50,10 @@ void MainWindow::on_pushButton_Start_clicked()
     detector.dead_time = ui->lineEdit_dead_time->text().toDouble();
     detector.time_slot = ui->lineEdit_time_slot->text().toDouble();
 
+    int num_repeat_experiment = ui->lineEdit_repeat->text().toInt();
+    double step_PD = ui->lineEdit_stepPD->text().toDouble();
+    double step_RR = ui->lineEdit_stepRR->text().toDouble();
+
     // Выбор режима построения графика
     if (ui->radioButton_spec->isChecked()) {
         // Построение спектра
@@ -60,8 +63,15 @@ void MainWindow::on_pushButton_Start_clicked()
         // Построение временной области с генерацией серии импульсов
         plotTimeDomain(laser);
     }
-    else if (ui->radioButton_gen_key->isChecked()){
+    else if (ui->radioButton_gen_key->isChecked() && num_repeat_experiment == 1){
         plotGenKeys(laser, detector);
+    }
+    else if (ui->radioButton_gen_key->isChecked() && num_repeat_experiment > 1){
+        for (int i = 0; i < num_repeat_experiment; i++) {
+            laser.pulseDuration = ui->lineEdit_pulseDuration->text().toDouble() - i * step_PD;
+            laser.repRate = ui->lineEdit_repRate->text().toDouble() + i * step_RR; // частота в МГц
+            plotGenKeys(laser, detector);
+        }
     }
 }
 
@@ -230,10 +240,11 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
 
         // вывод в файл
         save_results_to_file(num_reg_pulses, num_pulses,
-                             ui->lineEdit_repRate->text().toDouble(),
-                             ui->lineEdit_QE->text().toDouble(),
-                             ui->lineEdit_dead_time->text().toDouble(),
-                             ui->lineEdit_time_slot->text().toDouble());
+                             laser.pulseDuration,
+                             laser.repRate,
+                             detector.quantum_efficiency,
+                             detector.dead_time,
+                             detector.time_slot);
 
         ui->pulse_plot->clearGraphs();
 
@@ -256,7 +267,7 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
     }
 }
 
-void MainWindow::save_results_to_file(int num_reg_pulses, int total_sent_pulses,
+void MainWindow::save_results_to_file(int num_reg_pulses, int total_sent_pulses, double pulse_duration,
                                       double repRate, double QE, double dead_time, double time_slot) {
     double result = (double)num_reg_pulses / total_sent_pulses;
 
@@ -269,10 +280,10 @@ void MainWindow::save_results_to_file(int num_reg_pulses, int total_sent_pulses,
 
         // Заголовки только если файл создаётся впервые
         if (!fileExists) {
-            out << "repRate_MHz,quantum_eff,dead_time_ns,time_slot_ns,num_registered,total_sent,result\n";
+            out << "pulse_duration_ns,repRate_MHz,quantum_eff,dead_time_ns,time_slot_ns,num_registered,total_sent,result\n";
         }
 
-        out << repRate << "," << QE << "," << dead_time << "," << time_slot << ","
+        out << pulse_duration << "," << repRate << "," << QE << "," << dead_time << "," << time_slot << ","
             << num_reg_pulses << "," << total_sent_pulses << "," << result << "\n";
 
         file.close();

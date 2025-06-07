@@ -30,7 +30,7 @@ private:
     void plotGraph(const Laser &laser);
     void plotTimeDomain(const Laser &laser);
     void plotGenKeys(const Laser &laser, const Photodetector &detector);
-    void save_results_to_file(int num_reg_pulses, int total_sent_pulses,
+    void save_results_to_file(int num_reg_pulses, int total_sent_pulses, double pulse_duration,
                                           double repRate, double QE, double dead_time, double time_slot);
 };
 #endif // MAINWINDOW_H
