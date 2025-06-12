@@ -287,7 +287,7 @@ p, li { white-space: pre-wrap; }
           <item row="1" column="2" alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_22">
             <property name="text">
-             <string>Хроматическая дисперсия</string>
+             <string>Хроматическая дисперсия, пс/(нм*км)</string>
             </property>
            </widget>
           </item>
@@ -392,7 +392,7 @@ p, li { white-space: pre-wrap; }
           <item row="1" column="2" alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_26">
             <property name="text">
-             <string>Мёртвое время, нс</string>
+             <string>Мёртвое время, с</string>
             </property>
            </widget>
           </item>
@@ -413,14 +413,14 @@ p, li { white-space: pre-wrap; }
           <item row="1" column="0" alignment="Qt::AlignHCenter">
            <widget class="QLabel" name="label_28">
             <property name="text">
-             <string>Квантовая эффективность</string>
+             <string>Квантовая эффективность, %</string>
             </property>
            </widget>
           </item>
           <item row="1" column="4">
            <widget class="QLabel" name="label_27">
             <property name="text">
-             <string>Временное окно, нс</string>
+             <string>Временное окно, с</string>
             </property>
            </widget>
           </item>
