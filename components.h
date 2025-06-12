@@ -33,6 +33,12 @@ struct QuantumChannel{
     bool isCromDisp; //хроматическая дисперсия
 };
 
+struct Photodetector{
+    double quantum_efficiency;
+    double dead_time;
+    double time_slot;
+};
+
 class Components
 {
 private:
@@ -43,8 +49,18 @@ public:
 
     SpectrumData get_spectrum(const Laser &laser);
     TimeDomainData get_time_domain(const SpectrumData &spectrum, const Laser &laser, const QuantumChannel &quantumChannel);
+    int get_photons (const Laser &laser, const QuantumChannel &quantumChannel);
     TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses,
                                           double dt, const QuantumChannel &quantumChannel);
+
+    void gen_ph_timelabel(unsigned int numPulses, const std::vector<unsigned int>& numPhotons,
+                                      std::vector<std::vector<double>>& ph_time, const Photodetector &detector,
+                                      std::vector<double> &time_slots, double &time);
+
+    void get_time_slot(unsigned int num_pulses, const Laser &laser, std::vector<double>& time_slots, const Photodetector &detector);
+
+    int reg_pulses(std::vector<std::vector<double>>& ph_time,
+                                const Photodetector &detector, std::vector<double> &time_slots, std::vector<double> &time_reg);
 };
 
 #endif // COMPONENTS_H
