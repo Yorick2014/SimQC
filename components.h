@@ -6,13 +6,13 @@
 #include <QVector>
 
 struct Laser{
-    double centralWavelength;
+    double central_wavelength;
     double phase;
-    double pulseDuration;
+    double pulse_duration;
     double energy;
-    double averageCountPhotons; //среднее число фотонов
-    double numberPoints; //число точек для спектра
-    double repRate; // частота повторения импульсов
+    double avg_count_photons;
+    double number_points; //число точек для спектра
+    double rep_rate; // частота повторения импульсов
 };
 
 struct SpectrumData {
@@ -26,9 +26,9 @@ struct TimeDomainData {
 };
 
 struct QuantumChannel{
-    double channelLength;
-    double chromaticDispersion;
-    double channelAttenuation;
+    double channel_length;
+    double chromatic_dispersion;
+    double channel_attenuation;
     bool isAtt;
     bool isCromDisp; //хроматическая дисперсия
 };
@@ -48,9 +48,9 @@ public:
     ~Components();
 
     SpectrumData get_spectrum(const Laser &laser);
-    TimeDomainData get_time_domain(const SpectrumData &spectrum, const Laser &laser, const QuantumChannel &quantumChannel);
+    TimeDomainData spectrum_to_time_domain(const SpectrumData &spectrum, const Laser &laser, const QuantumChannel &quantumChannel);
     int get_photons (const Laser &laser, const QuantumChannel &quantumChannel);
-    TimeDomainData generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses,
+    TimeDomainData gen_composite_pulse(const TimeDomainData &singlePulse, const Laser &laser, int numPulses,
                                           double dt, const QuantumChannel &quantumChannel);
 
     void gen_ph_timelabel(unsigned int numPulses, const std::vector<unsigned int>& numPhotons,

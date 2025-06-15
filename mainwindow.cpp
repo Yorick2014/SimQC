@@ -36,15 +36,15 @@ void MainWindow::on_pushButton_Start_clicked()
     }
 
     // Считываем параметры лазера
-    laser.centralWavelength = ui->lineEdit_centralWavelength->text().toDouble();
-    laser.pulseDuration = ui->lineEdit_pulseDuration->text().toDouble();
-    laser.averageCountPhotons = ui->lineEdit_averageCountPh->text().toDouble();
-    laser.numberPoints = ui->lineEdit_N->text().toDouble();
-    laser.repRate = ui->lineEdit_repRate->text().toDouble(); // частота в МГц
+    laser.central_wavelength = ui->lineEdit_centralWavelength->text().toDouble();
+    laser.pulse_duration = ui->lineEdit_pulseDuration->text().toDouble();
+    laser.avg_count_photons = ui->lineEdit_averageCountPh->text().toDouble();
+    laser.number_points = ui->lineEdit_N->text().toDouble();
+    laser.rep_rate = ui->lineEdit_repRate->text().toDouble(); // частота в МГц
 
-    quantumChannel.channelAttenuation = ui->lineEdit_att->text().toDouble();
-    quantumChannel.channelLength = ui->lineEdit_length->text().toDouble();
-    quantumChannel.chromaticDispersion = ui->lineEdit_crom_disp->text().toDouble();
+    quantumChannel.channel_attenuation = ui->lineEdit_att->text().toDouble();
+    quantumChannel.channel_length = ui->lineEdit_length->text().toDouble();
+    quantumChannel.chromatic_dispersion = ui->lineEdit_crom_disp->text().toDouble();
 
     detector.quantum_efficiency = ui->lineEdit_QE->text().toDouble();
     detector.dead_time = ui->lineEdit_dead_time->text().toDouble();
@@ -68,10 +68,11 @@ void MainWindow::on_pushButton_Start_clicked()
     }
     else if (ui->radioButton_gen_key->isChecked() && num_repeat_experiment > 1){
         for (int i = 0; i < num_repeat_experiment; i++) {
-            laser.pulseDuration = ui->lineEdit_pulseDuration->text().toDouble() - i * step_PD;
-            laser.repRate = ui->lineEdit_repRate->text().toDouble() + i * step_RR; // частота в МГц
+            laser.pulse_duration = ui->lineEdit_pulseDuration->text().toDouble() - i * step_PD;
+            laser.rep_rate = ui->lineEdit_repRate->text().toDouble() + i * step_RR; // частота в МГц
             plotGenKeys(laser, detector);
         }
+        qDebug() << "End";
     }
 }
 
@@ -104,7 +105,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     Components components;
     // Получаем спектр и преобразуем его во временную область
     SpectrumData spectrumData = components.get_spectrum(laser);
-    TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser, quantumChannel);
+    TimeDomainData singlePulse = components.spectrum_to_time_domain(spectrumData, laser, quantumChannel);
 
     int numPulses = ui->lineEdit_num_pulse->text().toInt();
     if (numPulses < 1) {
@@ -115,7 +116,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     if (numPulses > 1 && singlePulse.time.size() >= 2) {
         double dt = singlePulse.time[1] - singlePulse.time[0];
         // Вызов метода для построения графика во временной обл
-        timeData = components.generateCompositePulse(singlePulse, laser, numPulses, dt, quantumChannel);
+        timeData = components.gen_composite_pulse(singlePulse, laser, numPulses, dt, quantumChannel);
     }
     else {
         timeData = singlePulse;
@@ -174,7 +175,7 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
     Components components;
     // Получаем спектр и преобразуем его во временную область
     SpectrumData spectrumData = components.get_spectrum(laser);
-    TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser, quantumChannel);
+    TimeDomainData singlePulse = components.spectrum_to_time_domain(spectrumData, laser, quantumChannel);
     std::vector<unsigned int> photon_counts; // стартовый вектор импульсов
     std::vector<std::vector<double>> matrix_pulses; // матрица импульсов с фотонами
 
@@ -215,10 +216,10 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
 
     if(time_reg.size() <= 1)
     {
-        qDebug() << "Не было зарегистрированных импульсов";
+//        qDebug() << "Не было зарегистрированных импульсов";
     }
     else{
-        qDebug() << "Кол-во зарег. импульсов: " << num_reg_pulses;
+//        qDebug() << "Кол-во зарег. импульсов: " << num_reg_pulses;
         ui->lineEdit_count_pulses->clear();
         ui->lineEdit_percent_pulses->clear();
         ui->lineEdit_count_pulses->setText(QString::number(num_reg_pulses)); // число принятых импульсов
@@ -240,8 +241,8 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
 
         // вывод в файл
         save_results_to_file(num_reg_pulses, num_pulses,
-                             laser.pulseDuration,
-                             laser.repRate,
+                             laser.pulse_duration,
+                             laser.rep_rate,
                              detector.quantum_efficiency,
                              detector.dead_time,
                              detector.time_slot);
@@ -287,7 +288,7 @@ void MainWindow::save_results_to_file(int num_reg_pulses, int total_sent_pulses,
             << num_reg_pulses << "," << total_sent_pulses << "," << result << "\n";
 
         file.close();
-        qDebug() << "Результаты сохранены в" << filename;
+//        qDebug() << "Результаты сохранены в" << filename;
     } else {
         qDebug() << "Ошибка открытия файла для записи результатов!";
     }
