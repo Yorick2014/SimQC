@@ -25,7 +25,6 @@ SpectrumData Components::get_spectrum(const Laser &laser) {
 
     // Центральная частота (Гц)
     const double nu0 = SPEED_LIGHT / laser.central_wavelength;
-    // std::cout << "Центральная частота: " << nu0 / 1e12 << " ТГц\n";
 
     // Стандартное отклонение во времени
     const double sigma_t = laser.pulse_duration / (2 * sqrt(2 * log(2)));
@@ -90,10 +89,10 @@ double calculate_fwhm_time(const std::vector<std::complex<double>> &E_time, doub
 }
 
 
-TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const Laser &laser, const QuantumChannel &quantumChannel)
+TimeDomainData Components::spectrum_to_time_domain(const SpectrumData &spectrum, const Laser &laser, const QuantumChannel &quantumChannel)
 {
     TimeDomainData timeData;
-    const int N_time = laser.number_points;  // Число временных точек
+    const int N_time = laser.number_points;
 
     // Диапазон частот спектра
     double nu_Min = spectrum.frequency.first();
@@ -101,11 +100,10 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
     double nu0 = 0.5 * (nu_Min + nu_Max);
 
     int N = spectrum.frequency.size(); // или laser.numberPoints
-    double dnu = (spectrum.frequency.last() - spectrum.frequency.first()) / (N - 1);
+    double dnu = (spectrum.frequency.last() - spectrum.frequency.first()) / (N - 1); // шаг по частоте
     double dt = 1.0 / (N * dnu);
 
     double t_min = -0.5 * N * dt;
-//    double t_max =  0.5 * N * dt;
 
     double lambda0 = laser.central_wavelength;   // м
 
@@ -124,7 +122,6 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
             double lambda = SPEED_LIGHT / nu;
             double deltaLambda = lambda - lambda0;
             double deltaLambda_nm = deltaLambda * 1e9;
-            // double omega = 2.0 * M_PI * nu;
 
             // Хроматическая дисперсия как задержка
             double delay = 0.0;
@@ -140,11 +137,6 @@ TimeDomainData Components::get_time_domain(const SpectrumData &spectrum, const L
             sum += amp * phase * dnu;
         }
         E_time[i] = sum;
-
-//        if (quantumChannel.isCromDisp) {
-//            double fwhm_time_ns = calculate_fwhm_time(E_time, dt);
-//            qDebug() << "Pulse temporal FWHM (after dispersion):" << fwhm_time_ns << "ns";
-//        }
     }
 
     timeData.time.reserve(N_time);
@@ -215,7 +207,7 @@ int Components::get_photons (const Laser &laser, const QuantumChannel &quantumCh
 }
 
 // Функция для генерации композиции импульсов с заданным периодом между ними
-TimeDomainData Components::generateCompositePulse(const TimeDomainData &singlePulse, const Laser &laser, int num_pulses, double dt, const QuantumChannel &quantumChannel)
+TimeDomainData Components::gen_composite_pulse(const TimeDomainData &singlePulse, const Laser &laser, int num_pulses, double dt, const QuantumChannel &quantumChannel)
 {
     int N_single = laser.number_points;
 
@@ -334,14 +326,3 @@ int Components::reg_pulses(std::vector<std::vector<double>>& ph_time,
     }
     return num_reg_pulses;
 }
-//            if (ph_time[i][j] >= time_slots[i] - (detector.time_slot / 2) &&
-//                    ph_time[i][j] <= time_slots[i] + (detector.time_slot / 2) &&
-//                    ph_time[i][j] > time_slots[i] + detector.dead_time){
-//                time_reg.push_back(ph_time[i][j]);
-//                num_reg_pulses++;
-
-//                qDebug() << "Регистрация импульса:" << time_reg[i];
-//                qDebug() << "dead time:" << detector.dead_time;
-//                qDebug() << "Регистрация импульса + dead time:" << time_reg[i] + detector.dead_time;
-//                break;
-//            }

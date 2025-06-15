@@ -105,7 +105,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     Components components;
     // Получаем спектр и преобразуем его во временную область
     SpectrumData spectrumData = components.get_spectrum(laser);
-    TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser, quantumChannel);
+    TimeDomainData singlePulse = components.spectrum_to_time_domain(spectrumData, laser, quantumChannel);
 
     int numPulses = ui->lineEdit_num_pulse->text().toInt();
     if (numPulses < 1) {
@@ -116,7 +116,7 @@ void MainWindow::plotTimeDomain(const Laser &laser)
     if (numPulses > 1 && singlePulse.time.size() >= 2) {
         double dt = singlePulse.time[1] - singlePulse.time[0];
         // Вызов метода для построения графика во временной обл
-        timeData = components.generateCompositePulse(singlePulse, laser, numPulses, dt, quantumChannel);
+        timeData = components.gen_composite_pulse(singlePulse, laser, numPulses, dt, quantumChannel);
     }
     else {
         timeData = singlePulse;
@@ -175,7 +175,7 @@ void MainWindow::plotGenKeys(const Laser &laser, const Photodetector &detector)
     Components components;
     // Получаем спектр и преобразуем его во временную область
     SpectrumData spectrumData = components.get_spectrum(laser);
-    TimeDomainData singlePulse = components.get_time_domain(spectrumData, laser, quantumChannel);
+    TimeDomainData singlePulse = components.spectrum_to_time_domain(spectrumData, laser, quantumChannel);
     std::vector<unsigned int> photon_counts; // стартовый вектор импульсов
     std::vector<std::vector<double>> matrix_pulses; // матрица импульсов с фотонами
 
