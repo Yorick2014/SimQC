@@ -99,3 +99,5 @@ build/CMakeFiles/run.dir/flags.make
 build/CMakeFiles/run.dir/link.txt
 build/CMakeFiles/run.dir/progress.make
 build/CMakeFiles/run.dir/src/main.cpp.o.d
+.vscode/settings.json
+.vscode/tasks.json

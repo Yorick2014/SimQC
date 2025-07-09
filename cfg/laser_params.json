@@ -1,0 +1,7 @@
+{
+  "central_wavelength": 1.55e-6,
+  "pulse_duration": 0.5e-9,
+  "avg_count_photons": 1,
+  "number_points": 8,
+  "repeat_rate": 1e9
+}
