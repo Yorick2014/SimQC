@@ -11,8 +11,6 @@ class Pulse {
     Laser laser;
     
     void get_spectrum();
-    // void print_frequency();
-    // void print_intensity();
         
 };
 double gaussian_spectrum(double nu, double nu0, double sigma_nu);

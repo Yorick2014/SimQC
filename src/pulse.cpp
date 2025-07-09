@@ -2,8 +2,11 @@
 #include "pulse.hpp"
 
 void Pulse::get_spectrum(){
+    std::cout << "get spectrum" << std::endl;
     // Центральная частота (Гц)
-    const double nu0 = SPEED_LIGHT / laser.central_wavelength;
+    double nu0 = SPEED_LIGHT / laser.central_wavelength;
+    std::cout << "laser.central_wavelength = " << laser.central_wavelength << std::endl;
+    std::cout << "get spectrum. nu0 = " << nu0 << std::endl;
 
     // Стандартное отклонение во времени
     const double sigma_t = laser.pulse_duration / (2 * sqrt(2 * log(2)));
@@ -27,10 +30,10 @@ void Pulse::get_spectrum(){
     // Рассчитываем спектр и заполняем структуру
     for (int i = 0; i < N; i++) {
         double nu = nu_min + i * step;
-        double intens = gaussian_spectrum(nu, nu0, sigma_nu);
+        double intensity = gaussian_spectrum(nu, nu0, sigma_nu);
         
-        frequency.push_back(nu);
-        intensity.push_back(intens);
+        this->frequency.push_back(nu);
+        this->intensity.push_back(intensity);
     }
 };
 
