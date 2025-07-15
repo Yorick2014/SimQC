@@ -18,9 +18,8 @@ int main() {
         std::cerr << "Ошибка конфигурации: " << e.what() << '\n';
     }
     Pulse pulse;
-    pulse.laser = laser;
-    pulse.get_spectrum();
-    
+    pulse.get_spectrum(laser);
+    pulse.spectrum_to_csv("spectrum.csv");
 
     for (double f : pulse.frequency) std::cout << f << "\n";
     for (double i : pulse.intensity) std::cout << i << "\n";

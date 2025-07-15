@@ -27,8 +27,8 @@ struct QuantumChannel{
     double channel_length;
     double chromatic_dispersion;
     double channel_attenuation;
-    bool isAtt;
-    bool isCromDisp; //хроматическая дисперсия
+    bool is_att;
+    bool is_crom_disp; //хроматическая дисперсия
 };
 struct Photodetector{
     double quantum_efficiency;
@@ -47,8 +47,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(QuantumChannel,
     channel_length,
     chromatic_dispersion,
     channel_attenuation,
-    isAtt,
-    isCromDisp
+    is_att,
+    is_crom_disp
 )
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Photodetector,
