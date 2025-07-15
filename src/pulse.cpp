@@ -99,6 +99,10 @@ void Pulse::spectrum_to_time_domain(const Laser &laser, const QuantumChannel &ch
             }
 
             double t_shifted = t + delay;
+            // std::cout << "t: " << t << std::endl;
+            // std::cout << "delay: " << delay << std::endl;
+            // std::cout << "t_shifted: " << t_shifted << std::endl;
+
             std::complex<double> phase = std::exp(std::complex<double>(0.0, 2.0 * M_PI * (nu - nu0) * t_shifted));
 
             sum += amp * phase * dnu;

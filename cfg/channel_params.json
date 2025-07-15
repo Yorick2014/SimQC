@@ -2,6 +2,6 @@
     "channel_length": 50.0,
     "chromatic_dispersion": 18,
     "channel_attenuation": 0.2,
-    "isAtt": false,
-    "isCromDisp": false    
+    "is_att": false,
+    "is_crom_disp": false    
 }
